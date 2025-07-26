@@ -4,11 +4,11 @@ import React, { useState } from 'react';
 // import MobileInputScreen from '../MyNewApp/src/screens/login/MobileNumber';
 // import OTPInputScreen from '../MyNewApp/src/screens/login/OTPInputScreen';
 // import DashboardScreen from '../MyNewApp/src/screens/dashboard/DashboardScreen';
-import SplashScreen from '../prayojanadev/src/screens/login/SplashScreen';
-import BackgroundScreen from '../prayojanadev/src/screens/login/SelectScreen';
-import MobileInputScreen from'../prayojanadev/src/screens/login/MobileNumber';
-import OTPInputScreen from '../prayojanadev/src/screens/login/OTPInputScreen';
-import DashboardScreen from '../prayojanadev/src/screens/dashboard/DashboardScreen';
+import SplashScreen from '../MyAppName/src/screens/login/SplashScreen';
+import BackgroundScreen from '../MyAppName/src/screens/login/SelectScreen';
+import MobileInputScreen from'../MyAppName/src/screens/login/MobileNumber';
+import OTPInputScreen from '../MyAppName/src/screens/login/OTPInputScreen';
+import DashboardScreen from '../MyAppName/src/screens/dashboard/DashboardScreen';
 const App = () => {
   const [showSplash, setShowSplash] = useState(true);
   const [currentScreen, setCurrentScreen] = useState('background');
