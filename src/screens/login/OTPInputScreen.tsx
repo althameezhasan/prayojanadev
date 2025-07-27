@@ -35,7 +35,7 @@ interface OTPInputScreenProps {
 const OTPInputScreen: React.FC<OTPInputScreenProps> = ({
   mobileNumber,
   otpData,
-  onVerify,
+  // onVerify,
   onBack,
   onSuccess,
 }) => {
@@ -76,11 +76,11 @@ const OTPInputScreen: React.FC<OTPInputScreenProps> = ({
     }
   };
 
-  const clearOTP = () => {
-    setOTP(['', '', '', '', '', '']);
-    setIsValid(false);
-    inputRefs.current[0]?.focus();
-  };
+  // const clearOTP = () => {
+  //   setOTP(['', '', '', '', '', '']);
+  //   setIsValid(false);
+  //   inputRefs.current[0]?.focus();
+  // };
 
   const handleVerify = () => {
     if (isValid) {
@@ -98,16 +98,16 @@ const OTPInputScreen: React.FC<OTPInputScreenProps> = ({
     }
   };
 
-  const handleGoBack = () => {
-    clearOTP();
-    onBack?.();
-  };
+  // const handleGoBack = () => {
+  //   clearOTP();
+  //   onBack?.();
+  // };
 
-  const handleResendOTP = () => {
-    // Add resend OTP logic here
-    console.log('Resending OTP...');
-    clearOTP();
-  };
+  // const handleResendOTP = () => {
+  //   // Add resend OTP logic here
+  //   console.log('Resending OTP...');
+  //   clearOTP();
+  // };
 
   // Handle OTP verification response
  useEffect(() => {

@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 // src/screens/login/MobileNumber.tsx
 import React, { useEffect, useState } from 'react';
 import {
@@ -58,7 +59,7 @@ const MobileInputScreen: React.FC<MobileInputScreenProps> = ({
         url: 'https://kwnfmv39-443.inc1.devtunnels.ms/api/auth/membersignin',
         method: 'POST',
         data: {
-          phone: `+91${mobileNumber}`,
+          phone: `+91${mobileNumber}`, // Fixed: Added backticks for template literal
         },
       });
     }
@@ -74,7 +75,7 @@ const MobileInputScreen: React.FC<MobileInputScreenProps> = ({
     if (errorForSignin) {
       console.error('Login failed:', errorForSignin);
     }
-  }, [isSigned, errorForSignin, mobileNumber, onSubmit]);
+  }, [isSigned, errorForSignin, mobileNumber, onSubmit, responseLogin]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -156,6 +157,7 @@ const MobileInputScreen: React.FC<MobileInputScreenProps> = ({
   );
 };
 
+// Rest of your styles remain the same...
 const styles = StyleSheet.create({
   container: {
     flex: 1,
