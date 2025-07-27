@@ -1,3 +1,4 @@
+// src/screens/login/SelectScreen.tsx
 import React from 'react';
 import {
   View,
@@ -19,7 +20,7 @@ const SelectScreen: React.FC<SelectScreenProps> = ({ onGetStarted }) => {
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
 
       <ImageBackground
-        source={require('./../../../assets/image/BackgroundScreen.png')}
+        source={require('../../../assets/image/BackgroundScreen.png')}
         style={styles.backgroundImage}
         resizeMode="contain"
       >
@@ -55,9 +56,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
-    // paddingVertical: 100,
-    paddingTop:50,
-    paddingBottom:80,
+    paddingTop: 50,
+    paddingBottom: 80,
     paddingHorizontal: 24,
     alignItems: 'center',
     shadowColor: '#000',

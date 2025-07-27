@@ -1,3 +1,4 @@
+// src/screens/login/OTPInputScreen.tsx
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
@@ -28,7 +29,7 @@ interface OTPInputScreenProps {
   otpData?: any;
   onVerify?: (otp: string) => void;
   onBack?: () => void;
-  onSuccess?: () => void; // Add this prop for navigation to dashboard
+   onSuccess?: (userToken: string, loginDetails: { loginType: string; id: number }) => void; // Updated to include loginDetails
 }
 
 const OTPInputScreen: React.FC<OTPInputScreenProps> = ({
@@ -75,13 +76,19 @@ const OTPInputScreen: React.FC<OTPInputScreenProps> = ({
     }
   };
 
+  const clearOTP = () => {
+    setOTP(['', '', '', '', '', '']);
+    setIsValid(false);
+    inputRefs.current[0]?.focus();
+  };
+
   const handleVerify = () => {
     if (isValid) {
       console.log('Verifying OTP:', otp.join(''));
       console.log('Mobile Number:', mobileNumber);
       
       handleVerifyOTP({
-        url: 'https://kwnfmv39-443.inc1.devtunnels.ms/api/auth/membersverify', // Replace with your verification endpoint
+        url: 'https://kwnfmv39-443.inc1.devtunnels.ms/api/auth/membersverify',
         method: 'POST',
         data: {
           phone: `+91${mobileNumber}`,
@@ -91,18 +98,29 @@ const OTPInputScreen: React.FC<OTPInputScreenProps> = ({
     }
   };
 
+  const handleGoBack = () => {
+    clearOTP();
+    onBack?.();
+  };
+
+  const handleResendOTP = () => {
+    // Add resend OTP logic here
+    console.log('Resending OTP...');
+    clearOTP();
+  };
+
   // Handle OTP verification response
-  useEffect(() => {
+ useEffect(() => {
     if (isVerified && verifyResponse) {
       console.log('OTP verification successful:', verifyResponse);
       
-      // Check if the response indicates successful authentication
-      // Based on your actual API response structure: response.message.statusMsg
       if (verifyResponse?.message?.statusMsg === "Authentication Success!!!") {
         console.log('Authentication successful, navigating to dashboard');
-        console.log('Access Token:', verifyResponse.message.accessToken);
-        console.log('Login Details:', verifyResponse.message.loginDetails);
-        onSuccess?.(); // Navigate to dashboard
+        const userToken = verifyResponse.message.accessToken;
+        const loginDetails = verifyResponse.message.loginDetails;
+        console.log('Access Token:', userToken);
+        console.log('Login Details:', loginDetails);
+        onSuccess?.(userToken, loginDetails); // Pass both userToken and loginDetails
       } else {
         console.log('Authentication failed - unexpected response structure');
       }
@@ -110,7 +128,6 @@ const OTPInputScreen: React.FC<OTPInputScreenProps> = ({
 
     if (verifyError) {
       console.error('OTP verification failed:', verifyError);
-      // You can add error handling UI here if needed
     }
   }, [isVerified, verifyError, verifyResponse, onSuccess]);
 

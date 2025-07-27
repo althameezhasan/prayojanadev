@@ -9,16 +9,24 @@ import {
 
 interface DashboardScreenProps {
   onLogout?: () => void;
+  userToken?: string | null;
+  loginDetails?: { loginType: string; id: number } | null; // Add loginDetails to props
 }
 
-const DashboardScreen: React.FC<DashboardScreenProps> = ({ onLogout }) => {
+const DashboardScreen: React.FC<DashboardScreenProps> = ({ onLogout, userToken, loginDetails }) => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.welcomeText}>Welcome to Dashboard!</Text>
-        <Text style={styles.subText}>Hello</Text>
+        <Text style={styles.subText}>Token: {userToken}</Text>
+        {loginDetails && (
+          <>
+            <Text style={styles.subText}>Login Type: {loginDetails.loginType}</Text>
+            <Text style={styles.subText}>User ID: {loginDetails.id}</Text>
+          </>
+        )}
       </View>
-      
+
       <View style={styles.content}>
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Dashboard</Text>

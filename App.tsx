@@ -1,69 +1,119 @@
 import React, { useState } from 'react';
-// import SplashScreen from '../MyNewApp/src/screens/login/SplashScreen';
-// import BackgroundScreen from '../MyNewApp/src/screens/login/SelectScreen';
-// import MobileInputScreen from '../MyNewApp/src/screens/login/MobileNumber';
-// import OTPInputScreen from '../MyNewApp/src/screens/login/OTPInputScreen';
-// import DashboardScreen from '../MyNewApp/src/screens/dashboard/DashboardScreen';
-import SplashScreen from '../MyAppName/src/screens/login/SplashScreen';
-import BackgroundScreen from '../MyAppName/src/screens/login/SelectScreen';
-import MobileInputScreen from'../MyAppName/src/screens/login/MobileNumber';
-import OTPInputScreen from '../MyAppName/src/screens/login/OTPInputScreen';
-import DashboardScreen from '../MyAppName/src/screens/dashboard/DashboardScreen';
+import SplashScreen from './src/screens/login/SplashScreen';
+import SelectScreen from './src/screens/login/SelectScreen';
+import MobileInputScreen from './src/screens/login/MobileNumber';
+import OTPInputScreen from './src/screens/login/OTPInputScreen';
+import DashboardScreen from './src/screens/dashboard/DashboardScreen';
+
+export type AuthScreen = 'splash' | 'select' | 'mobile' | 'otp' | 'dashboard';
+
+interface AuthState {
+  currentScreen: AuthScreen;
+  mobileNumber: string;
+  otpData: any;
+  userToken: string | null;
+  loginDetails: { loginType: string; id: number } | null; // Added loginDetails
+}
+
 const App = () => {
   const [showSplash, setShowSplash] = useState(true);
-  const [currentScreen, setCurrentScreen] = useState('background');
-  const [mobileNumber, setMobileNumber] = useState('');
-  const [otpData, setOtpData] = useState<any>(null);
+  const [authState, setAuthState] = useState<AuthState>({
+    currentScreen: 'select',
+    mobileNumber: '',
+    otpData: null,
+    userToken: null,
+    loginDetails: null, // Initialize loginDetails
+  });
+
+  // Navigation handlers
+  const navigateToScreen = (screen: AuthScreen, data?: Partial<AuthState>) => {
+    setAuthState(prev => ({
+      ...prev,
+      currentScreen: screen,
+      ...data
+    }));
+  };
 
   const handleSplashFinish = () => {
     setShowSplash(false);
   };
 
   const handleGetStarted = () => {
-    setCurrentScreen('mobile');
+    navigateToScreen('mobile');
   };
 
   const handleMobileSubmit = (number: string, otpData?: any) => {
-    setMobileNumber(number);
-    if (otpData) setOtpData(otpData);
-    setCurrentScreen('otp');
+    navigateToScreen('otp', {
+      mobileNumber: number,
+      otpData: otpData
+    });
   };
 
-  const handleOTPSuccess = () => {
+  const handleOTPSuccess = (userToken: string, loginDetails: { loginType: string; id: number }) => {
     console.log('OTP verification successful, navigating to dashboard');
-    setCurrentScreen('dashboard');
+    navigateToScreen('dashboard', { userToken, loginDetails }); // Pass loginDetails
   };
 
   const handleBackToMobile = () => {
-    setCurrentScreen('mobile');
+    navigateToScreen('mobile', {
+      otpData: null
+    });
+  };
+
+  const handleBackToSelect = () => {
+    navigateToScreen('select', {
+      mobileNumber: '',
+      otpData: null,
+      userToken: null,
+      loginDetails: null // Reset loginDetails
+    });
   };
 
   const handleLogout = () => {
-    // Reset all states and go back to background screen
-    setMobileNumber('');
-    setOtpData(null);
-    setCurrentScreen('background');
+    setAuthState({
+      currentScreen: 'select',
+      mobileNumber: '',
+      otpData: null,
+      userToken: null,
+      loginDetails: null // Reset loginDetails
+    });
   };
 
   const renderCurrentScreen = () => {
-    switch (currentScreen) {
-      case 'background':
-        return <BackgroundScreen onGetStarted={handleGetStarted} />;
+    switch (authState.currentScreen) {
+      case 'select':
+        return <SelectScreen onGetStarted={handleGetStarted} />;
+      
       case 'mobile':
-        return <MobileInputScreen onSubmit={handleMobileSubmit} />;
+        return (
+          <MobileInputScreen 
+            onSubmit={handleMobileSubmit}
+            onBack={handleBackToSelect}
+            initialMobileNumber={authState.mobileNumber}
+          />
+        );
+      
       case 'otp':
         return (
           <OTPInputScreen 
-            mobileNumber={mobileNumber} 
-            otpData={otpData}
+            mobileNumber={authState.mobileNumber}
+            otpData={authState.otpData}
             onBack={handleBackToMobile}
             onSuccess={handleOTPSuccess}
           />
         );
+      
       case 'dashboard':
-        return <DashboardScreen onLogout={handleLogout} />;
+        return (
+          <DashboardScreen 
+            onLogout={handleLogout}
+            userToken={authState.userToken}
+            loginDetails={authState.loginDetails} // Pass loginDetails
+          />
+        );
+      
       default:
-        return <BackgroundScreen onGetStarted={handleGetStarted} />;
+        return <SelectScreen onGetStarted={handleGetStarted} />;
     }
   };
 
