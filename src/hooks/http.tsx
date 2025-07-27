@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import axios, { AxiosRequestConfig } from 'axios';
 
 // Define types for common API responses
@@ -22,6 +22,7 @@ interface UseHTTPResponse<T = any> {
   callAPI: (config: AxiosRequestConfig) => Promise<void>;
   error: string | null;
   success: boolean;
+  reset: () => void; // Added reset function
 }
 
 const useHTTP = <T = LoginResponse>(): UseHTTPResponse<T> => {
@@ -30,7 +31,8 @@ const useHTTP = <T = LoginResponse>(): UseHTTPResponse<T> => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  const callAPI = async (config: AxiosRequestConfig) => {
+  // Memoize the callAPI function to prevent unnecessary re-renders
+  const callAPI = useCallback(async (config: AxiosRequestConfig) => {
     setLoading(true);
     setError(null);
     setSuccess(false);
@@ -48,9 +50,17 @@ const useHTTP = <T = LoginResponse>(): UseHTTPResponse<T> => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  return { loading, data, callAPI, error, success };
+  // Reset function to clear all states
+  const reset = useCallback(() => {
+    setLoading(false);
+    setData(null);
+    setError(null);
+    setSuccess(false);
+  }, []);
+
+  return { loading, data, callAPI, error, success, reset };
 };
 
 export default useHTTP;
