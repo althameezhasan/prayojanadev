@@ -1,4 +1,3 @@
-// components/Dashboard/DashboardMenuGrid.tsx
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Household } from '../../../fetching/types';
@@ -6,6 +5,8 @@ import { Household } from '../../../fetching/types';
 interface DashboardMenuGridProps {
   household?: Household | null;
   onLogout?: () => void;
+  onMenuSelect?: (type: 'Plan' | 'Carebuddy' | 'Captain' | 'Member' | null) => void;
+  loginDetails?: { loginType: string; id: number } | null;
 }
 
 interface MenuItemProps {
@@ -27,20 +28,63 @@ const MenuItem: React.FC<MenuItemProps> = ({ icon, title, onPress, isLogout = fa
   </TouchableOpacity>
 );
 
-const DashboardMenuGrid: React.FC<DashboardMenuGridProps> = ({ household, onLogout }) => {
-  const menuItems = [
-    { icon: '📋', title: 'Plan\nDetails', onPress: () => console.log('Plan Details') },
-    { icon: '👤', title: 'Member\nDetails', onPress: () => console.log('Member Details') },
-    { icon: '🤝', title: 'Helper', onPress: () => console.log('Helper') },
-    { icon: '👥', title: 'Relatives', onPress: () => console.log('Relatives') },
-    { icon: '💬', title: 'Interactions', onPress: () => console.log('Interactions') },
-    { icon: '✅', title: 'Tasks', onPress: () => console.log('Tasks') },
+const DashboardMenuGrid: React.FC<DashboardMenuGridProps> = ({ 
+  household, 
+  onLogout, 
+  onMenuSelect, 
+  loginDetails 
+}) => {
+  const loginType = loginDetails?.loginType || 'Unknown';
+  
+  // Define all menu items with their access rules
+  const allMenuItems = [
+    { 
+      icon: '📋', 
+      title: 'Plan\nDetails', 
+      onPress: () => onMenuSelect?.('Plan'),
+      allowedFor: ['Paying Child'] // Only Paying Child can see this
+    },
+    { 
+      icon: '👤', 
+      title: 'Member\nDetails', 
+      onPress: () => onMenuSelect?.('Member'),
+      allowedFor: ['Member', 'Paying Child', 'Relative'] // All can see this
+    },
+    { 
+      icon: '🤝', 
+      title: 'Carebuddy', 
+      onPress: () => onMenuSelect?.('Carebuddy'),
+      allowedFor: ['Member', 'Paying Child', 'Relative'] // All can see this
+    },
+    { 
+      icon: '👥', 
+      title: 'Relatives', 
+      onPress: () => console.log('Relatives'),
+      allowedFor: ['Member', 'Paying Child', 'Relative'] // All can see this
+    },
+    { 
+      icon: '💬', 
+      title: 'Interactions', 
+      onPress: () => console.log('Interactions'),
+      allowedFor: ['Member', 'Paying Child'] // Only Member and Paying Child
+    },
+    { 
+      icon: '✅', 
+      title: 'Tasks', 
+      onPress: () => console.log('Tasks'),
+      allowedFor: ['Member', 'Paying Child', 'Relative'] // All can see this
+    },
   ];
+
+  // Filter menu items based on login type
+  const visibleMenuItems = allMenuItems.filter(item => 
+    item.allowedFor.includes(loginType)
+  );
 
   return (
     <View style={styles.container}>
       <View style={styles.grid}>
-        {menuItems.map((item, index) => (
+        {visibleMenuItems.map((item, index) => (
           <MenuItem
             key={index}
             icon={item.icon}
@@ -50,12 +94,11 @@ const DashboardMenuGrid: React.FC<DashboardMenuGridProps> = ({ household, onLogo
         ))}
       </View>
       
-      {/* Bottom row with Team and Logout */}
       <View style={styles.bottomRow}>
         <MenuItem
           icon="👥"
           title="Team"
-          onPress={() => console.log('Team')}
+          onPress={() => onMenuSelect?.('Captain')}
         />
         <MenuItem
           icon="🚪"
@@ -131,4 +174,3 @@ const styles = StyleSheet.create({
 });
 
 export default DashboardMenuGrid;
-

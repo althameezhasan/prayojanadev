@@ -36,6 +36,8 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({
           error={error}
           data={data}
           onLogout={onLogout}
+          userToken={userToken}
+          loginDetails={loginDetails}
         />
       </ScrollView>
     </SafeAreaView>
