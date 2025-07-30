@@ -30,7 +30,6 @@ interface OTPInputScreenProps {
   mobileNumber: string;
   otpData?: any;
   onBack?: () => void;
-  // Removed onSuccess and onVerify props since we're using global auth
 }
 
 const OTPInputScreen: React.FC<OTPInputScreenProps> = ({
@@ -105,6 +104,7 @@ const OTPInputScreen: React.FC<OTPInputScreenProps> = ({
   };
 
   const handleGoBack = () => {
+    console.log('Going back to mobile number screen');
     clearOTP();
     resetHTTP(); // Reset HTTP state
     clearError(); // Clear any auth errors
@@ -187,7 +187,15 @@ const OTPInputScreen: React.FC<OTPInputScreenProps> = ({
         style={styles.topBanner}
         resizeMode="contain"
       >
-        <TouchableOpacity style={styles.backArrow} onPress={handleGoBack} />
+        {/* Improved back button with visual feedback */}
+        <TouchableOpacity 
+          style={styles.backArrow} 
+          onPress={handleGoBack}
+          disabled={verifyLoading || authState.isLoading}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.backArrowText}>←</Text>
+        </TouchableOpacity>
       </ImageBackground>
 
       <View style={{ width: '100%', alignItems: 'center' }}>
@@ -205,6 +213,14 @@ const OTPInputScreen: React.FC<OTPInputScreenProps> = ({
         <Text style={styles.inputSubtitle}>
           +91 {mobileNumber}
         </Text>
+        {/* Add a clickable link to change mobile number */}
+        <TouchableOpacity 
+          onPress={handleGoBack}
+          disabled={verifyLoading || authState.isLoading}
+          style={styles.changeNumberButton}
+        >
+          <Text style={styles.changeNumberText}>Change mobile number?</Text>
+        </TouchableOpacity>
         {otpData && otpData.statusMsg && (
           <Text style={styles.inputSubtitle}>{otpData.statusMsg}</Text>
         )}
@@ -227,7 +243,7 @@ const OTPInputScreen: React.FC<OTPInputScreenProps> = ({
               maxLength={2}
               textAlign="center"
               autoFocus={index === 0}
-              editable={!verifyLoading && !authState.isLoading} // Disable input while loading
+              editable={!verifyLoading && !authState.isLoading}
             />
           ))}
         </View>
@@ -292,8 +308,17 @@ const styles = StyleSheet.create({
   },
   backArrow: {
     position: 'absolute',
-    top: 20,
+    top: 50,
     left: 20,
+    padding: 10,
+    zIndex: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 20,
+  },
+  backArrowText: {
+    fontSize: 24,
+    color: '#000',
+    fontWeight: 'bold',
   },
   loginSection: {
     alignItems: 'flex-start',
@@ -324,6 +349,16 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     marginTop: 4,
+  },
+  changeNumberButton: {
+    marginTop: 8,
+    padding: 4,
+  },
+  changeNumberText: {
+    fontSize: 14,
+    color: '#007C91',
+    fontWeight: '600',
+    textDecorationLine: 'underline',
   },
   inputContainer: {
     paddingHorizontal: 24,

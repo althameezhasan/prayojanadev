@@ -7,23 +7,24 @@ import {
   TouchableOpacity,
   SafeAreaView,
   StatusBar,
+  Image,
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import DashboardScreen from '../dashboard/DashboardScreen';
 import PlainScreen from '../dashboard/HomeScreen';
 
-export type NavScreen = 'home' | 'dashboard' | 'profile' | 'settings';
+export type NavScreen = 'home' | 'dashboard' | 'profile' | 'Interactions';
 
 const NavbarScreen: React.FC = () => {
   const { logout } = useAuth();
   const [currentScreen, setCurrentScreen] = useState<NavScreen>('home');
 
-  const navItems: { key: NavScreen; label: string; icon: string }[] = [
-    { key: 'home', label: 'Home', icon: '🏠' },
-    { key: 'dashboard', label: 'Dashboard', icon: '📊' },
-    { key: 'profile', label: 'Profile', icon: '👤' },
-    { key: 'settings', label: 'Settings', icon: '⚙️' },
-  ];
+  const navItems: { key: NavScreen; label: string; icon: any }[] = [
+  { key: 'home', label: 'Home', icon: require('../../../assets/image/icons/home-page.png') },
+  { key: 'dashboard', label: 'Dashboard', icon: require('../../../assets/image/icons/to-do-list.png') },
+  { key: 'profile', label: 'Profile', icon: require('../../../assets/image/icons/user.png') },
+  { key: 'Interactions', label: 'Interactions', icon: require('../../../assets/image/icons/interactivity.png') },
+];
 
   const handleScreenChange = (screen: NavScreen) => {
     setCurrentScreen(screen);
@@ -33,10 +34,10 @@ const NavbarScreen: React.FC = () => {
     switch (currentScreen) {
       case 'home':
         return <PlainScreen onNavigateToDashboard={() => handleScreenChange('dashboard')} />;
-      
+
       case 'dashboard':
         return <DashboardScreen onLogout={logout} />;
-      
+
       case 'profile':
         return (
           <View style={styles.screenContainer}>
@@ -44,15 +45,15 @@ const NavbarScreen: React.FC = () => {
             <Text style={styles.screenSubtitle}>Coming Soon...</Text>
           </View>
         );
-      
-      case 'settings':
+
+      case 'Interactions':
         return (
           <View style={styles.screenContainer}>
-            <Text style={styles.screenTitle}>Settings Screen</Text>
+            <Text style={styles.screenTitle}>Interactions Screen</Text>
             <Text style={styles.screenSubtitle}>Coming Soon...</Text>
           </View>
         );
-      
+
       default:
         return <PlainScreen onNavigateToDashboard={() => handleScreenChange('dashboard')} />;
     }
@@ -61,11 +62,9 @@ const NavbarScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
-      
+
       {/* Main Content */}
-      <View style={styles.content}>
-        {renderScreen()}
-      </View>
+      <View style={styles.content}>{renderScreen()}</View>
 
       {/* Bottom Navigation */}
       <View style={styles.navbar}>
@@ -79,16 +78,19 @@ const NavbarScreen: React.FC = () => {
             onPress={() => handleScreenChange(item.key)}
             activeOpacity={0.7}
           >
-            <Text style={[
-              styles.navIcon,
-              currentScreen === item.key && styles.navIconActive,
-            ]}>
-              {item.icon}
-            </Text>
-            <Text style={[
-              styles.navLabel,
-              currentScreen === item.key && styles.navLabelActive,
-            ]}>
+            <Image
+              source={item.icon}
+              style={[
+                styles.navIconImage,
+                currentScreen === item.key && styles.navIconImageActive,
+              ]}
+            />
+            <Text
+              style={[
+                styles.navLabel,
+                currentScreen === item.key && styles.navLabelActive,
+              ]}
+            >
               {item.label}
             </Text>
           </TouchableOpacity>
@@ -113,8 +115,8 @@ const styles = StyleSheet.create({
     borderTopColor: '#e0e0e0',
     paddingVertical: 8,
     paddingHorizontal: 4,
-    elevation: 10, // Android shadow
-    shadowColor: '#000', // iOS shadow
+    elevation: 10,
+    shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: -2,
@@ -133,12 +135,14 @@ const styles = StyleSheet.create({
   navItemActive: {
     backgroundColor: '#e8f5ff',
   },
-  navIcon: {
-    fontSize: 20,
-    marginBottom: 4,
+  navIconImage: {
+    width: 24,
+    height: 24,
     opacity: 0.6,
+    marginBottom: 4,
+    resizeMode: 'contain',
   },
-  navIconActive: {
+  navIconImageActive: {
     opacity: 1,
   },
   navLabel: {

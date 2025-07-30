@@ -1,5 +1,5 @@
 // App.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { AuthProvider, useAuth, useIsAuthenticated, useAuthLoading } from './src/context/AuthContext';
 import SplashScreen from './src/screens/login/SplashScreen';
@@ -18,7 +18,7 @@ interface NavigationState {
 
 // Main App Content Component
 const AppContent: React.FC = () => {
-  const { logout } = useAuth();
+  const { logout, state } = useAuth();
   const isAuthenticated = useIsAuthenticated();
   const isAuthLoading = useAuthLoading();
   
@@ -28,6 +28,18 @@ const AppContent: React.FC = () => {
     mobileNumber: '',
     otpData: null,
   });
+
+  // Reset navigation state when user logs out
+  useEffect(() => {
+    if (!isAuthenticated && !isAuthLoading) {
+      // Reset to SelectScreen when user is logged out
+      setNavState({
+        currentScreen: 'select',
+        mobileNumber: '',
+        otpData: null,
+      });
+    }
+  }, [isAuthenticated, isAuthLoading]);
 
   // Show loading spinner while checking authentication
   if (isAuthLoading) {
