@@ -5,20 +5,39 @@ import {
   SafeAreaView,
   ScrollView,
 } from 'react-native';
-import { DashboardScreenProps } from '../../../fetching/types';
+import { useAuth, useAuthToken, useLoginDetails } from '../../context/AuthContext';
 import { useDashboardData } from '../../hooks/useDashboardData';
 import CurvedDashboardHeader from '../../components/Dashboard/DashboardHeader';
 import DashboardContent from '../../components/Dashboard/DashboardContent';
 
-const DashboardScreen: React.FC<DashboardScreenProps> = ({ 
-  onLogout, 
-  userToken, 
-  loginDetails 
-}) => {
+interface DashboardScreenProps {
+  onLogout: () => void; // Keep this for backward compatibility, but we'll use global logout
+}
+
+const DashboardScreen: React.FC<DashboardScreenProps> = ({ onLogout }) => {
+  // Use global auth state
+  const { logout } = useAuth();
+  const userToken = useAuthToken();
+  const loginDetails = useLoginDetails();
+
+  // Use dashboard data hook with global auth data
   const { loading, data, error } = useDashboardData({ 
     loginDetails, 
     userToken 
   });
+
+  // Handle logout - use global logout function
+  const handleLogout = async () => {
+    try {
+      await logout();
+      // The App component will automatically navigate to auth screens
+      // when the authentication state changes
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Fallback to prop logout if global logout fails
+      onLogout();
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -35,7 +54,7 @@ const DashboardScreen: React.FC<DashboardScreenProps> = ({
           loading={loading}
           error={error}
           data={data}
-          onLogout={onLogout}
+          onLogout={handleLogout} // Use our local handler that calls global logout
           userToken={userToken}
           loginDetails={loginDetails}
         />

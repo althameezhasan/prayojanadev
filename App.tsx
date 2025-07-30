@@ -1,33 +1,51 @@
+// App.tsx
 import React, { useState } from 'react';
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { AuthProvider, useAuth, useIsAuthenticated, useAuthLoading } from './src/context/AuthContext';
 import SplashScreen from './src/screens/login/SplashScreen';
 import SelectScreen from './src/screens/login/SelectScreen';
 import MobileInputScreen from './src/screens/login/MobileNumber';
 import OTPInputScreen from './src/screens/login/OTPInputScreen';
-import DashboardScreen from './src/screens/dashboard/DashboardScreen';
+import NavbarScreen from './src/screens/navigation/NavbarScreen';
 
-export type AuthScreen = 'splash' | 'select' | 'mobile' | 'otp' | 'dashboard';
+export type AuthScreen = 'splash' | 'select' | 'mobile' | 'otp';
 
-interface AuthState {
+interface NavigationState {
   currentScreen: AuthScreen;
   mobileNumber: string;
   otpData: any;
-  userToken: string | null;
-  loginDetails: { loginType: string; id: number } | null; // Added loginDetails
 }
 
-const App = () => {
+// Main App Content Component
+const AppContent: React.FC = () => {
+  const { logout } = useAuth();
+  const isAuthenticated = useIsAuthenticated();
+  const isAuthLoading = useAuthLoading();
+  
   const [showSplash, setShowSplash] = useState(true);
-  const [authState, setAuthState] = useState<AuthState>({
+  const [navState, setNavState] = useState<NavigationState>({
     currentScreen: 'select',
     mobileNumber: '',
     otpData: null,
-    userToken: null,
-    loginDetails: null, // Initialize loginDetails
   });
 
-  // Navigation handlers
-  const navigateToScreen = (screen: AuthScreen, data?: Partial<AuthState>) => {
-    setAuthState(prev => ({
+  // Show loading spinner while checking authentication
+  if (isAuthLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#007C91" />
+      </View>
+    );
+  }
+
+  // If authenticated, show navbar screen instead of dashboard directly
+  if (isAuthenticated) {
+    return <NavbarScreen />;
+  }
+
+  // Navigation handlers for auth flow
+  const navigateToScreen = (screen: AuthScreen, data?: Partial<NavigationState>) => {
+    setNavState(prev => ({
       ...prev,
       currentScreen: screen,
       ...data
@@ -49,11 +67,6 @@ const App = () => {
     });
   };
 
-  const handleOTPSuccess = (userToken: string, loginDetails: { loginType: string; id: number }) => {
-    console.log('OTP verification successful, navigating to dashboard');
-    navigateToScreen('dashboard', { userToken, loginDetails }); // Pass loginDetails
-  };
-
   const handleBackToMobile = () => {
     navigateToScreen('mobile', {
       otpData: null
@@ -64,23 +77,12 @@ const App = () => {
     navigateToScreen('select', {
       mobileNumber: '',
       otpData: null,
-      userToken: null,
-      loginDetails: null // Reset loginDetails
     });
   };
 
-  const handleLogout = () => {
-    setAuthState({
-      currentScreen: 'select',
-      mobileNumber: '',
-      otpData: null,
-      userToken: null,
-      loginDetails: null // Reset loginDetails
-    });
-  };
-
-  const renderCurrentScreen = () => {
-    switch (authState.currentScreen) {
+  // Render auth screens
+  const renderAuthScreen = () => {
+    switch (navState.currentScreen) {
       case 'select':
         return <SelectScreen onGetStarted={handleGetStarted} />;
       
@@ -89,26 +91,18 @@ const App = () => {
           <MobileInputScreen 
             onSubmit={handleMobileSubmit}
             onBack={handleBackToSelect}
-            initialMobileNumber={authState.mobileNumber}
+            initialMobileNumber={navState.mobileNumber}
           />
         );
       
       case 'otp':
         return (
           <OTPInputScreen 
-            mobileNumber={authState.mobileNumber}
-            otpData={authState.otpData}
+            mobileNumber={navState.mobileNumber}
+            otpData={navState.otpData}
             onBack={handleBackToMobile}
-            onSuccess={handleOTPSuccess}
-          />
-        );
-      
-      case 'dashboard':
-        return (
-          <DashboardScreen 
-            onLogout={handleLogout}
-            userToken={authState.userToken}
-            loginDetails={authState.loginDetails} // Pass loginDetails
+            // No need to pass onSuccess - OTP screen will handle login globally
+            // After successful login, user will be redirected to NavbarScreen automatically
           />
         );
       
@@ -122,10 +116,28 @@ const App = () => {
       {showSplash ? (
         <SplashScreen onFinish={handleSplashFinish} />
       ) : (
-        renderCurrentScreen()
+        renderAuthScreen()
       )}
     </>
   );
 };
+
+// Main App Component with Provider
+const App: React.FC = () => {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  );
+};
+
+const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+  },
+});
 
 export default App;

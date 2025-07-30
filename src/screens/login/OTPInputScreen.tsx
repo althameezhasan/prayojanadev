@@ -9,7 +9,9 @@ import {
   Image,
   SafeAreaView,
   ImageBackground,
+  Alert,
 } from 'react-native';
+import { useAuth } from '../../context/AuthContext';
 import useHTTP from '../../hooks/http';
 
 // Define the expected response type based on your actual API response
@@ -27,21 +29,21 @@ interface VerifyOTPResponse {
 interface OTPInputScreenProps {
   mobileNumber: string;
   otpData?: any;
-  onVerify?: (otp: string) => void;
   onBack?: () => void;
-   onSuccess?: (userToken: string, loginDetails: { loginType: string; id: number }) => void; // Updated to include loginDetails
+  // Removed onSuccess and onVerify props since we're using global auth
 }
 
 const OTPInputScreen: React.FC<OTPInputScreenProps> = ({
   mobileNumber,
   otpData,
-  onVerify,
   onBack,
-  onSuccess,
 }) => {
   const [otp, setOTP] = useState(['', '', '', '', '', '']);
   const [isValid, setIsValid] = useState(false);
   const inputRefs = useRef<(TextInput | null)[]>([]);
+  
+  // Use global auth context
+  const { login, clearError, state: authState } = useAuth();
   
   // HTTP hook for OTP verification with proper typing
   const { 
@@ -49,7 +51,8 @@ const OTPInputScreen: React.FC<OTPInputScreenProps> = ({
     data: verifyResponse, 
     callAPI: handleVerifyOTP, 
     error: verifyError, 
-    success: isVerified 
+    success: isVerified,
+    reset: resetHTTP
   } = useHTTP<VerifyOTPResponse>();
 
   const validateOTP = (otpArray: string[]) => {
@@ -82,10 +85,13 @@ const OTPInputScreen: React.FC<OTPInputScreenProps> = ({
     inputRefs.current[0]?.focus();
   };
 
-  const handleVerify = () => {
+  const handleVerify = async () => {
     if (isValid) {
       console.log('Verifying OTP:', otp.join(''));
       console.log('Mobile Number:', mobileNumber);
+      
+      // Clear any previous auth errors
+      clearError();
       
       handleVerifyOTP({
         url: 'https://kwnfmv39-443.inc1.devtunnels.ms/api/auth/membersverify',
@@ -100,6 +106,8 @@ const OTPInputScreen: React.FC<OTPInputScreenProps> = ({
 
   const handleGoBack = () => {
     clearOTP();
+    resetHTTP(); // Reset HTTP state
+    clearError(); // Clear any auth errors
     onBack?.();
   };
 
@@ -107,29 +115,70 @@ const OTPInputScreen: React.FC<OTPInputScreenProps> = ({
     // Add resend OTP logic here
     console.log('Resending OTP...');
     clearOTP();
+    resetHTTP(); // Reset HTTP state
+    // You can add actual resend API call here
   };
 
   // Handle OTP verification response
- useEffect(() => {
-    if (isVerified && verifyResponse) {
-      console.log('OTP verification successful:', verifyResponse);
-      
-      if (verifyResponse?.message?.statusMsg === "Authentication Success!!!") {
-        console.log('Authentication successful, navigating to dashboard');
-        const userToken = verifyResponse.message.accessToken;
-        const loginDetails = verifyResponse.message.loginDetails;
-        console.log('Access Token:', userToken);
-        console.log('Login Details:', loginDetails);
-        onSuccess?.(userToken, loginDetails); // Pass both userToken and loginDetails
-      } else {
-        console.log('Authentication failed - unexpected response structure');
+  useEffect(() => {
+    const handleVerificationResponse = async () => {
+      if (isVerified && verifyResponse) {
+        console.log('OTP verification successful:', verifyResponse);
+        
+        if (verifyResponse?.message?.statusMsg === "Authentication Success!!!") {
+          console.log('Authentication successful, logging in globally');
+          
+          const userToken = verifyResponse.message.accessToken;
+          const loginDetails = verifyResponse.message.loginDetails;
+          
+          console.log('Access Token:', userToken);
+          console.log('Login Details:', loginDetails);
+          
+          try {
+            // Use global login function
+            await login(userToken, loginDetails);
+            // Navigation will be handled automatically by App.tsx when auth state changes
+          } catch (error) {
+            console.error('Global login failed:', error);
+            Alert.alert(
+              'Login Error',
+              'Failed to save login information. Please try again.',
+              [{ text: 'OK' }]
+            );
+          }
+        } else {
+          console.log('Authentication failed - unexpected response structure');
+          Alert.alert(
+            'Verification Failed',
+            'Invalid OTP. Please check and try again.',
+            [{ text: 'OK', onPress: () => clearOTP() }]
+          );
+        }
       }
-    }
 
-    if (verifyError) {
-      console.error('OTP verification failed:', verifyError);
+      if (verifyError) {
+        console.error('OTP verification failed:', verifyError);
+        Alert.alert(
+          'Verification Error',
+          'OTP verification failed. Please try again.',
+          [{ text: 'OK', onPress: () => clearOTP() }]
+        );
+      }
+    };
+
+    handleVerificationResponse();
+  }, [isVerified, verifyError, verifyResponse, login]);
+
+  // Display auth errors from global state
+  useEffect(() => {
+    if (authState.error) {
+      Alert.alert(
+        'Authentication Error',
+        authState.error,
+        [{ text: 'OK', onPress: () => clearError() }]
+      );
     }
-  }, [isVerified, verifyError, verifyResponse, onSuccess]);
+  }, [authState.error, clearError]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -138,7 +187,7 @@ const OTPInputScreen: React.FC<OTPInputScreenProps> = ({
         style={styles.topBanner}
         resizeMode="contain"
       >
-        <TouchableOpacity style={styles.backArrow} onPress={onBack} />
+        <TouchableOpacity style={styles.backArrow} onPress={handleGoBack} />
       </ImageBackground>
 
       <View style={{ width: '100%', alignItems: 'center' }}>
@@ -178,7 +227,7 @@ const OTPInputScreen: React.FC<OTPInputScreenProps> = ({
               maxLength={2}
               textAlign="center"
               autoFocus={index === 0}
-              editable={!verifyLoading} // Disable input while loading
+              editable={!verifyLoading && !authState.isLoading} // Disable input while loading
             />
           ))}
         </View>
@@ -195,25 +244,28 @@ const OTPInputScreen: React.FC<OTPInputScreenProps> = ({
       <TouchableOpacity
         style={[
           styles.verifyButton, 
-          (!isValid || verifyLoading) && styles.verifyButtonDisabled
+          (!isValid || verifyLoading || authState.isLoading) && styles.verifyButtonDisabled
         ]}
         onPress={handleVerify}
-        disabled={!isValid || verifyLoading}
+        disabled={!isValid || verifyLoading || authState.isLoading}
       >
         <Text style={[
           styles.verifyButtonText, 
-          (!isValid || verifyLoading) && styles.verifyButtonTextDisabled
+          (!isValid || verifyLoading || authState.isLoading) && styles.verifyButtonTextDisabled
         ]}>
-          {verifyLoading ? 'Verifying...' : 'Verify OTP'}
+          {verifyLoading || authState.isLoading ? 'Verifying...' : 'Verify OTP'}
         </Text>
       </TouchableOpacity>
 
       <View style={styles.resendContainer}>
         <Text style={styles.resendText}>Didn't receive the code? </Text>
-        <TouchableOpacity disabled={verifyLoading}>
+        <TouchableOpacity 
+          disabled={verifyLoading || authState.isLoading}
+          onPress={handleResendOTP}
+        >
           <Text style={[
             styles.resendLink, 
-            verifyLoading && { color: '#ccc' }
+            (verifyLoading || authState.isLoading) && { color: '#ccc' }
           ]}>
             Resend OTP
           </Text>
