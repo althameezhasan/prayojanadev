@@ -4,8 +4,10 @@ import SelectScreen from './src/screens/login/SelectScreen';
 import MobileInputScreen from './src/screens/login/MobileNumber';
 import OTPInputScreen from './src/screens/login/OTPInputScreen';
 import DashboardScreen from './src/screens/dashboard/DashboardScreen';
-import AuthenticatorLoginScreen from './src/screens/login/authenticatorLogin/AuthenticatorLoginScreen';
-import AuthenticatorSetupScreen from './src/screens/login/authenticatorLogin/AuthenticatorSetupScreen';
+import AuthenticatorLoginScreen from './src/screens/login/AuthenticatorSetupScreen';
+// import AuthenticatorSetupScreen from './src/screens/login/AuthenticatorSetupScreen';
+import { Alert } from 'react-native';
+import axios from 'axios';
 
 
 export type AuthScreen = 'splash' | 'select' | 'mobile' | 'otp' | 'authenticator-setup' | 'authenticator-login' | 'dashboard';
@@ -72,14 +74,33 @@ const App = () => {
     });
   };
 
-const handleAuthenticatorLogin = () => {
-  // For now, we assume QR setup is always needed
-  navigateToScreen('authenticator-setup');
+const handleAuthenticatorLogin = async () => {
+  try {
+    const res = await axios.post(
+      'http://192.168.1.5:3000/api/auth/generate',
+      { phone: '+916383162304' },
+      { headers: { 'Content-Type': 'application/json' }, timeout: 10000 }
+    );
+
+    console.log("Generated secret successfully", res.data);
+
+    navigateToScreen('authenticator-login', {
+      otpData: {
+        secret: res.data.base32,
+        otpauth_url: res.data.otpauth_url,
+        phoneNumber: '+916383162304'
+      }
+    });
+  } catch (err: any) {
+    console.error("QR generation failed", err.response?.data || err.message);
+    Alert.alert("Error", "Could not generate OTP secret. Please try again.");
+  }
 };
 
-const handleAuthenticatorSetupNext = () => {
-  navigateToScreen('authenticator-login');
-};
+
+// const handleAuthenticatorSetupNext = () => {
+//   navigateToScreen('authenticator-login');
+// };
 
   const handleLogout = () => {
     setAuthState({
@@ -129,21 +150,23 @@ const handleAuthenticatorSetupNext = () => {
           />
         );
       
-case 'authenticator-setup':
-  return (
-    <AuthenticatorSetupScreen
-      onBack={handleBackToSelect}
-      onNext={handleAuthenticatorSetupNext}
-    />
-  );
+// case 'authenticator-setup':
+//   return (
+//     <AuthenticatorSetupScreen
+//       onBack={handleBackToSelect}
+//       // onNext={handleAuthenticatorSetupNext}
+//     />
+//   );
 
 case 'authenticator-login':
   return (
     <AuthenticatorLoginScreen 
       onBack={handleBackToSelect}
       onSuccess={handleAuthenticatorSuccess}
+      otpData={authState.otpData} // this prop must exist in the new single-screen version
     />
   );
+
       
       case 'dashboard':
         return (
