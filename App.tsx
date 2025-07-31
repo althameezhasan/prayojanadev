@@ -8,6 +8,7 @@ import MobileInputScreen from './src/screens/login/MobileNumber';
 import OTPInputScreen from './src/screens/login/OTPInputScreen';
 import NavbarScreen from './src/screens/navigation/NavbarScreen';
 
+
 export type AuthScreen = 'splash' | 'select' | 'mobile' | 'otp';
 
 interface NavigationState {

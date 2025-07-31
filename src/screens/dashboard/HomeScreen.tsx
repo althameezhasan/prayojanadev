@@ -1,23 +1,16 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   SafeAreaView,
-  ActivityIndicator,
-  ImageBackground,
-  Dimensions,
   ScrollView,
-  Image,
+  ImageBackground,
 } from 'react-native';
 import { useAuth, useLoginDetails } from '../../context/AuthContext';
-import { useMemberInfo } from '../../hooks/useMemberInfo';
-import { useHouseholdTasks } from '../../hooks/useHouseholdTasks';
-import { Task } from '../../../fetching/types/taskTypes';
-import TasksList from '../../components/Homescreen/TasksList';
-
-const { width: screenWidth } = Dimensions.get('window');
+import HomeScreenHeader, { TeamMember, HeaderData } from '../../components/Homescreen/HomeScreenHeader';
+import TeamProfileSection from '../../components/Homescreen/TeamProfileSection';
 
 interface HomeScreenProps {
   onNavigateToDashboard: () => void;
@@ -26,62 +19,13 @@ interface HomeScreenProps {
 const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToDashboard }) => {
   const { logout } = useAuth();
   const loginDetails = useLoginDetails();
-  const [memberName, setMemberName] = useState<string>('');
-  const [householdId, setHouseholdId] = useState<number | null>(null);
-
-  // Only fetch member info if loginType is "Member"
-  const shouldFetchMemberInfo = loginDetails?.loginType === 'Member';
-  const memberId = shouldFetchMemberInfo ? loginDetails?.id : null;
-
-  console.log('🏠 HomeScreen - Login Details:', {
-    loginType: loginDetails?.loginType,
-    id: loginDetails?.id,
-    shouldFetchMemberInfo,
-    memberId,
+  const [headerData, setHeaderData] = useState<HeaderData>({
+    memberName: '',
+    householdId: null,
+    teamMembers: [],
+    isLoading: false,
+    hasError: false,
   });
-
-  // Use the member info hook
-  const { memberInfo, loading: memberLoading, error: memberError } = useMemberInfo({
-    memberId: memberId,
-    userToken: undefined,
-    shouldFetch: shouldFetchMemberInfo,
-  });
-
-  // Use household tasks hook
-  const { tasks, loading: tasksLoading, error: tasksError } = useHouseholdTasks({
-    householdId,
-    userToken: undefined,
-    shouldFetch: !!householdId,
-  });
-
-  // Extract member name and household ID when memberInfo is available
-  useEffect(() => {
-    if (shouldFetchMemberInfo && memberInfo && loginDetails?.id) {
-      console.log('🔍 Searching for member in memberArr...');
-      console.log('🆔 Looking for ID:', loginDetails.id);
-      console.log('👥 Available members:', memberInfo.message.data.memberArr);
-      console.log('🏠 Household ID from API:', memberInfo.message.data.household_id);
-
-      // Extract household_id from the API response
-      setHouseholdId(memberInfo.message.data.household_id);
-
-      // Find the member with matching ID
-      const currentMember = memberInfo.message.data.memberArr.find(
-        (member) => member.memberId === loginDetails.id,
-      );
-
-      if (currentMember) {
-        console.log('✅ Found matching member:', currentMember);
-        setMemberName(currentMember.memberName);
-      } else {
-        console.log('❌ No matching member found');
-        setMemberName('Member');
-      }
-    } else if (!shouldFetchMemberInfo) {
-      setMemberName(loginDetails?.loginType || 'User');
-      setHouseholdId(null);
-    }
-  }, [memberInfo, loginDetails, shouldFetchMemberInfo]);
 
   const handleLogout = async () => {
     try {
@@ -95,121 +39,57 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToDashboard }) => {
     console.log('Notification icon pressed');
   };
 
-  const handleTaskPress = (task: Task) => {
-    console.log('Task pressed:', task);
-    // Add your task action logic here
+  const handleTeamMemberPress = (member: TeamMember) => {
+    console.log('Team member pressed:', member);
+    // Add navigation to team member profile or actions
   };
 
-  const handleRefresh = () => {
-    console.log('Refreshing tasks...');
-    // Refresh logic can be implemented here if needed
-  };
-
-  const handleSeeAllPress = () => {
-    console.log('See All button pressed');
-    // No action linked yet as per requirement
-  };
-
-  const isLoadingMemberName = shouldFetchMemberInfo && memberLoading && !memberName;
+  const handleHeaderDataLoaded = useCallback((data: HeaderData) => {
+    setHeaderData(data);
+  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Curved Header with Background Image */}
-        <View style={styles.headerContainer}>
-          <ImageBackground
-            source={require('../../../assets/image/Hometopbg.png')}
-            style={styles.headerBackground}
-            imageStyle={styles.headerBackgroundImage}
-          >
-            {/* Header Overlay */}
-            <View style={styles.headerOverlay}>
-              {/* Header Content - Welcome Section and Notification */}
-              <View style={styles.headerContent}>
-                <View style={styles.headerRow}>
-                  <View style={styles.welcomeSection}>
-                    <Text style={styles.welcomeText}>Welcome!</Text>
-
-                    {isLoadingMemberName ? (
-                      <View style={styles.loadingContainer}>
-                        <ActivityIndicator size="small" color="#ffffff" />
-                        <Text style={styles.loadingText}>Loading member info...</Text>
-                      </View>
-                    ) : (
-                      <>
-                        <Text style={styles.memberNameText}>{memberName}</Text>
-                        {/* Display Household ID for members */}
-                        {shouldFetchMemberInfo && householdId && (
-                          <Text style={styles.householdIdText}>
-                            Household ID: {householdId}
-                          </Text>
-                        )}
-                        <Text style={styles.loginTypeText}>
-                          Logged in as: {loginDetails?.loginType || 'User'}
-                        </Text>
-                      </>
-                    )}
-
-                    {/* Show error if member info fetch failed */}
-                    {shouldFetchMemberInfo && memberError && (
-                      <Text style={styles.errorText}>Failed to load member details</Text>
-                    )}
-                  </View>
-                  <TouchableOpacity
-                    style={styles.notificationButton}
-                    onPress={handleNotificationPress}
-                    activeOpacity={0.7}
-                  >
-                    <Image
-                      source={require('../../../assets/image/icons/notification.png')}
-                      style={styles.notificationIcon}
-                    />
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </View>
-          </ImageBackground>
-
-          {/* Curved Bottom Shape */}
-          <View style={styles.curvedBottom} />
-        </View>
+        {/* Header Component */}
+        <HomeScreenHeader
+          onNotificationPress={handleNotificationPress}
+          onDataLoaded={handleHeaderDataLoaded}
+        />
 
         {/* Main Content */}
         <View style={styles.content}>
-          {/* Tasks Section - Only show for members with household ID */}
-          {shouldFetchMemberInfo && householdId && (
-            <View style={styles.tasksSection}>
-              <TasksList
-                tasks={tasks?.slice(0, 1) || []} // Limit to one task
-                loading={tasksLoading}
-                error={tasksError}
-                onTaskPress={handleTaskPress}
-                onRefresh={handleRefresh}
-              />
-           
+          {/* Medicine Reminder Card */}
+          <ImageBackground
+            source={require('../../../assets/image/carousel.png')} // Change path if needed
+            style={styles.reminderCard}
+            imageStyle={{ borderRadius: 12 }}
+          >
+            <Text style={styles.reminderText}>Don’t forget to take your medicines on time.</Text>
+          </ImageBackground>
+
+          {/* Team Profile Section */}
+          <TeamProfileSection
+            teamMembers={headerData.teamMembers}
+            onTeamMemberPress={handleTeamMemberPress}
+          />
+
+          {/* Debug Section */}
+          {__DEV__ && (
+            <View style={styles.debugSection}>
+              <Text style={styles.debugTitle}>Debug Info:</Text>
+              <Text style={styles.debugText}>Login Type: {loginDetails?.loginType}</Text>
+              <Text style={styles.debugText}>Member Name: {headerData.memberName}</Text>
+              <Text style={styles.debugText}>Loading: {headerData.isLoading ? 'Yes' : 'No'}</Text>
+              <Text style={styles.debugText}>Error: {headerData.hasError ? 'Yes' : 'No'}</Text>
+              <Text style={styles.debugText}>Household ID: {headerData.householdId || 'None'}</Text>
+              <Text style={styles.debugText}>Team Members: {headerData.teamMembers.length}</Text>
             </View>
           )}
 
+          {/* Logout Button */}
           <View style={styles.mainContent}>
-            <View style={styles.iconContainer}>
-              <Text style={styles.iconText}>🎉</Text>
-            </View>
-
-            <Text style={styles.title}>You're Successfully Logged In!</Text>
-            <Text style={styles.subtitle}>
-              Welcome to your personalized experience. Explore your dashboard and tasks below.
-            </Text>
-
             <View style={styles.buttonContainer}>
-              <TouchableOpacity
-                style={styles.dashboardButton}
-                onPress={onNavigateToDashboard}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.dashboardButtonText}>Go to Dashboard</Text>
-                <Text style={styles.dashboardButtonIcon}>→</Text>
-              </TouchableOpacity>
-
               <TouchableOpacity
                 style={styles.logoutButton}
                 onPress={handleLogout}
@@ -218,13 +98,6 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToDashboard }) => {
                 <Text style={styles.logoutButtonText}>Logout</Text>
               </TouchableOpacity>
             </View>
-          </View>
-
-          {/* Footer */}
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>
-              Explore more features using the navigation bar below
-            </Text>
           </View>
         </View>
       </ScrollView>
@@ -240,172 +113,64 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
   },
-  headerContainer: {
-    position: 'relative',
-    height: 250,
-  },
-  headerBackground: {
-    flex: 1,
-    width: '100%',
-  },
-  headerBackgroundImage: {
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
-  },
-  headerOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 124, 145, 0.8)',
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
-    paddingHorizontal: 24,
-  },
-  headerContent: {
-    flex: 1,
-    paddingTop: 60,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    width: '100%',
-  },
-  curvedBottom: {
-    position: 'absolute',
-    bottom: -1,
-    left: 0,
-    right: 0,
-    height: 30,
-    backgroundColor: '#007C91',
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
-    opacity: 0.1,
-  },
   content: {
     flex: 1,
     padding: 24,
     marginTop: -20,
   },
-  welcomeSection: {
-    width: '70%',
-    alignItems: 'flex-start',
-  },
-  welcomeText: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#ffffff',
-    marginBottom: 4,
-  },
-  memberNameText: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#ffffff',
-    marginBottom: 4,
-  },
-  householdIdText: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#e8f5ff',
-    marginBottom: 4,
-  },
-  loginTypeText: {
-    fontSize: 14,
-    color: '#e8f5ff',
-    fontWeight: '500',
-  },
-  loadingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 8,
-  },
-  loadingText: {
-    fontSize: 14,
-    color: '#ffffff',
-    marginLeft: 8,
-  },
-  errorText: {
-    fontSize: 12,
-    color: '#ffcccb',
-    fontWeight: '500',
-    marginTop: 4,
-  },
-  notificationButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+
+  // Reminder Card
+ reminderCard: {
+  marginTop:24,
+  width: '100%',
+  height: 120,
+  borderRadius: 12,
+  overflow: 'hidden',
+  justifyContent: 'center',
+  alignItems: 'center',
+  marginBottom: 24,
+  paddingTop: 12,
+  backgroundColor: '#e0f7fa', // fallback if image fails
+},
+reminderText: {
+  color: '#000',
+  fontSize: 18,
+  fontWeight: 'bold',
+  textAlign: 'center',
+  paddingHorizontal: 20,
+},
+
+
+  // Debug Section Styles
+  debugSection: {
+    backgroundColor: '#f0f0f0',
+    padding: 16,
+    marginBottom: 16,
+    borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#ffffff',
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
+    borderColor: '#ddd',
   },
-  notificationIcon: {
-    width: 24,
-    height: 24,
+  debugTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 8,
   },
+  debugText: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 4,
+  },
+
+  // Main Content Styles
   mainContent: {
     justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 40,
-  },
-  iconContainer: {
-    width: 80,
-    height: 80,
-    backgroundColor: '#e8f5ff',
-    borderRadius: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  iconText: {
-    fontSize: 32,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1a1a1a',
-    textAlign: 'center',
-    marginBottom: 12,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
-    textAlign: 'center',
-    lineHeight: 24,
-    marginBottom: 40,
-    paddingHorizontal: 20,
+    paddingVertical: 20,
   },
   buttonContainer: {
     width: '100%',
     alignItems: 'center',
-  },
-  dashboardButton: {
-    backgroundColor: '#007C91',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 32,
-    paddingVertical: 16,
-    borderRadius: 25,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    marginBottom: 12,
-  },
-  dashboardButtonText: {
-    color: '#ffffff',
-    fontSize: 18,
-    fontWeight: '600',
-    marginRight: 8,
-  },
-  dashboardButtonIcon: {
-    color: '#ffffff',
-    fontSize: 18,
-    fontWeight: 'bold',
   },
   logoutButton: {
     backgroundColor: '#dc3545',
@@ -420,39 +185,12 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.1,
     shadowRadius: 2,
-    marginTop: 8,
   },
   logoutButtonText: {
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '600',
     textAlign: 'center',
-  },
-  footer: {
-    alignItems: 'center',
-    paddingBottom: 20,
-    marginTop: 20,
-  },
-  footerText: {
-    fontSize: 14,
-    color: '#999',
-    textAlign: 'center',
-  },
-  tasksSection: {
-    marginBottom: 20,
-  },
-  seeAllButton: {
-    backgroundColor: '#007C91',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 25,
-    alignSelf: 'center',
-    marginTop: 12,
-  },
-  seeAllButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
   },
 });
 

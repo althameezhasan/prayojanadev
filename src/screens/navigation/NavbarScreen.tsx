@@ -1,30 +1,22 @@
 // src/screens/navigation/NavbarScreen.tsx
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  SafeAreaView,
-  StatusBar,
-  Image,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, StatusBar, Image } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
-import DashboardScreen from '../dashboard/DashboardScreen';
-import PlainScreen from '../dashboard/HomeScreen';
+import HomeScreen from '../dashboard/HomeScreen';
+import ProfileScreen from '../profile/ProfileScreen'; // Import the ProfileScreen
 
-export type NavScreen = 'home' | 'dashboard' | 'profile' | 'Interactions';
+export type NavScreen = 'home' | 'task' | 'profile' | 'Interactions';
 
 const NavbarScreen: React.FC = () => {
   const { logout } = useAuth();
   const [currentScreen, setCurrentScreen] = useState<NavScreen>('home');
 
-  const navItems: { key: NavScreen; label: string; icon: any }[] = [
-  { key: 'home', label: 'Home', icon: require('../../../assets/image/icons/home-page.png') },
-  { key: 'dashboard', label: 'Dashboard', icon: require('../../../assets/image/icons/to-do-list.png') },
-  { key: 'profile', label: 'Profile', icon: require('../../../assets/image/icons/user.png') },
-  { key: 'Interactions', label: 'Interactions', icon: require('../../../assets/image/icons/interactivity.png') },
-];
+  const navItems: { key: NavScreen; label: string; icon: any; disabled?: boolean }[] = [
+    { key: 'home', label: 'Home', icon: require('../../../assets/image/icons/home-page.png') },
+    { key: 'task', label: 'Task', icon: require('../../../assets/image/icons/to-do-list.png') },
+    { key: 'profile', label: 'Profile', icon: require('../../../assets/image/icons/user.png') },
+    { key: 'Interactions', label: 'Interactions', icon: require('../../../assets/image/icons/interactivity.png'), disabled: true },
+  ];
 
   const handleScreenChange = (screen: NavScreen) => {
     setCurrentScreen(screen);
@@ -33,19 +25,16 @@ const NavbarScreen: React.FC = () => {
   const renderScreen = () => {
     switch (currentScreen) {
       case 'home':
-        return <PlainScreen onNavigateToDashboard={() => handleScreenChange('dashboard')} />;
-
-      case 'dashboard':
-        return <DashboardScreen onLogout={logout} />;
-
-      case 'profile':
+        return <HomeScreen onNavigateToDashboard={() => handleScreenChange('task')} />;
+      case 'task':
         return (
           <View style={styles.screenContainer}>
-            <Text style={styles.screenTitle}>Profile Screen</Text>
+            <Text style={styles.screenTitle}>Task Screen</Text>
             <Text style={styles.screenSubtitle}>Coming Soon...</Text>
           </View>
         );
-
+      case 'profile':
+        return <ProfileScreen />; // Render the ProfileScreen here
       case 'Interactions':
         return (
           <View style={styles.screenContainer}>
@@ -53,42 +42,37 @@ const NavbarScreen: React.FC = () => {
             <Text style={styles.screenSubtitle}>Coming Soon...</Text>
           </View>
         );
-
       default:
-        return <PlainScreen onNavigateToDashboard={() => handleScreenChange('dashboard')} />;
+        return <HomeScreen onNavigateToDashboard={() => handleScreenChange('task')} />;
     }
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
-
-      {/* Main Content */}
       <View style={styles.content}>{renderScreen()}</View>
-
-      {/* Bottom Navigation */}
       <View style={styles.navbar}>
         {navItems.map((item) => (
           <TouchableOpacity
             key={item.key}
-            style={[
-              styles.navItem,
-              currentScreen === item.key && styles.navItemActive,
-            ]}
-            onPress={() => handleScreenChange(item.key)}
-            activeOpacity={0.7}
+            style={[styles.navItem, item.disabled && styles.navItemDisabled]}
+            onPress={() => !item.disabled && handleScreenChange(item.key)}
+            activeOpacity={item.disabled ? 1 : 0.7}
+            disabled={item.disabled}
           >
             <Image
               source={item.icon}
               style={[
                 styles.navIconImage,
                 currentScreen === item.key && styles.navIconImageActive,
+                item.disabled && styles.navIconImageDisabled,
               ]}
             />
             <Text
               style={[
                 styles.navLabel,
                 currentScreen === item.key && styles.navLabelActive,
+                item.disabled && styles.navLabelDisabled,
               ]}
             >
               {item.label}
@@ -110,49 +94,51 @@ const styles = StyleSheet.create({
   },
   navbar: {
     flexDirection: 'row',
-    backgroundColor: '#ffffff',
-    borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
+    justifyContent: 'space-around',
+    alignItems: 'center',
     paddingVertical: 8,
-    paddingHorizontal: 4,
-    elevation: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#ddd',
+    backgroundColor: '#fff',
+    elevation: 8,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: -2,
-    },
+    shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowRadius: 6,
   },
   navItem: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 4,
-    borderRadius: 12,
-    marginHorizontal: 2,
+    justifyContent: 'center',
+    paddingVertical: 6,
   },
-  navItemActive: {
-    backgroundColor: '#e8f5ff',
+  navItemDisabled: {
+    opacity: 0.4,
   },
   navIconImage: {
-    width: 24,
-    height: 24,
-    opacity: 0.6,
-    marginBottom: 4,
+    width: 26,
+    height: 26,
+    marginBottom: 2,
     resizeMode: 'contain',
+    tintColor: '#888',
   },
   navIconImageActive: {
-    opacity: 1,
+    tintColor: '#007C91',
+  },
+  navIconImageDisabled: {
+    tintColor: '#ccc',
   },
   navLabel: {
     fontSize: 12,
-    color: '#666',
+    color: '#888',
     fontWeight: '500',
   },
   navLabelActive: {
     color: '#007C91',
     fontWeight: '600',
+  },
+  navLabelDisabled: {
+    color: '#ccc',
   },
   screenContainer: {
     flex: 1,

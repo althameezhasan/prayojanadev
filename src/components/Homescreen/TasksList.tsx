@@ -63,14 +63,14 @@ const TasksList: React.FC<TasksListProps> = ({
 
   return (
     <View style={styles.container}>
-      {/* <View style={styles.header}>
-        <Text style={styles.headerTitle}>Household Tasks</Text>
-        {tasks && (
+      <View style={styles.header}>
+        // <Text style={styles.headerTitle}>Household Tasks</Text>
+        // {tasks && (
           <Text style={styles.taskCount}>
             {tasks.length} task{tasks.length !== 1 ? 's' : ''}
           </Text>
         )}
-      </View> */}
+      </View>
       
       <FlatList
         data={tasks || []}
