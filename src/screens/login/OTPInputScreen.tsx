@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import useHTTP from '../../hooks/http';
+import { AUTH_URL } from '../../constants';
 
 // Define the expected response type based on your actual API response
 interface VerifyOTPResponse {
@@ -93,7 +94,7 @@ const OTPInputScreen: React.FC<OTPInputScreenProps> = ({
       clearError();
       
       handleVerifyOTP({
-        url: 'https://kwnfmv39-443.inc1.devtunnels.ms/api/auth/membersverify',
+        url: AUTH_URL+'membersverify',
         method: 'POST',
         data: {
           phone: `+91${mobileNumber}`,

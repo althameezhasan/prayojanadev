@@ -1,7 +1,8 @@
 // services/memberInfoApi.ts
+import { API_URL } from '../../src/constants';
 import { MemberInfoResponse } from '../types/memberInfoTypes';
 
-const BASE_URL = 'https://kwnfmv39-443.inc1.devtunnels.ms/prayojana/member/member/info';
+const BASE_URL = API_URL+'member/member/info';
 
 export class MemberInfoApiService {
   static async fetchMemberInfo(memberId: number, userToken?: string | null): Promise<MemberInfoResponse> {

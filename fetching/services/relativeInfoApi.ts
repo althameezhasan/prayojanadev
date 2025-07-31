@@ -1,7 +1,8 @@
 // services/relativeInfoApi.ts
+import { API_URL } from '../../src/constants';
 import { RelativeInfoResponse } from '../types/relativeInfoTypes';
 
-const BASE_URL = 'https://kwnfmv39-443.inc1.devtunnels.ms/prayojana/member/relataive/info';
+const BASE_URL = API_URL+'member/relataive/info';
 
 export class RelativeInfoApiService {
   static async fetchRelativeInfo(memberId: number, userToken?: string | null): Promise<RelativeInfoResponse> {

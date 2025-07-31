@@ -11,6 +11,8 @@ import {
   ImageBackground,
 } from 'react-native';
 import useHTTP from '../../hooks/http';
+import { AUTH_URL } from '../../constants';
+
 
 interface MobileInputScreenProps {
   onSubmit: (number: string, otpData?: any) => void;
@@ -55,7 +57,7 @@ const MobileInputScreen: React.FC<MobileInputScreenProps> = ({
       console.log('Sending login request...');
 
       handleSignin({
-        url: 'https://kwnfmv39-443.inc1.devtunnels.ms/api/auth/membersignin',
+        url: AUTH_URL+'membersignin',
         method: 'POST',
         data: {
           phone: `+91${mobileNumber}`,
