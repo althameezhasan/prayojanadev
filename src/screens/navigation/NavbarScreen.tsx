@@ -3,7 +3,8 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, StatusBar, Image } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import HomeScreen from '../dashboard/HomeScreen';
-import ProfileScreen from '../Profile/ProfileScreen'; // Import the ProfileScreen
+import ProfileScreen from '../Profile/ProfileScreen';
+import TaskScreen from '../Task/TaskScreen'; // Import the TaskScreen
 
 export type NavScreen = 'home' | 'task' | 'profile' | 'Interactions';
 
@@ -27,14 +28,9 @@ const NavbarScreen: React.FC = () => {
       case 'home':
         return <HomeScreen onNavigateToDashboard={() => handleScreenChange('task')} />;
       case 'task':
-        return (
-          <View style={styles.screenContainer}>
-            <Text style={styles.screenTitle}>Task Screen</Text>
-            <Text style={styles.screenSubtitle}>Coming Soon...</Text>
-          </View>
-        );
+        return <TaskScreen />; // Render the TaskScreen here
       case 'profile':
-        return <ProfileScreen />; // Render the ProfileScreen here
+        return <ProfileScreen />;
       case 'Interactions':
         return (
           <View style={styles.screenContainer}>

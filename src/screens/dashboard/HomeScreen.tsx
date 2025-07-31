@@ -8,7 +8,7 @@ import {
   ScrollView,
   ImageBackground,
 } from 'react-native';
-import { useAuth, useLoginDetails } from '../../context/AuthContext';
+import { useLoginDetails, useAuth } from '../../context/AuthContext'; // Import useAuth
 import HomeScreenHeader, { TeamMember, HeaderData } from '../../components/Homescreen/HomeScreenHeader';
 import TeamProfileSection from '../../components/Homescreen/TeamProfileSection';
 
@@ -17,8 +17,8 @@ interface HomeScreenProps {
 }
 
 const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToDashboard }) => {
-  const { logout } = useAuth();
   const loginDetails = useLoginDetails();
+  const { updateHouseholdId } = useAuth(); // Get the update function
   const [headerData, setHeaderData] = useState<HeaderData>({
     memberName: '',
     householdId: null,
@@ -26,14 +26,6 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToDashboard }) => {
     isLoading: false,
     hasError: false,
   });
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
-  };
 
   const handleNotificationPress = () => {
     console.log('Notification icon pressed');
@@ -44,9 +36,15 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToDashboard }) => {
     // Add navigation to team member profile or actions
   };
 
-  const handleHeaderDataLoaded = useCallback((data: HeaderData) => {
+  const handleHeaderDataLoaded = useCallback(async (data: HeaderData) => {
     setHeaderData(data);
-  }, []);
+    
+    // Update the household ID in AuthContext when it's received
+    if (data.householdId && data.householdId !== loginDetails?.householdId) {
+      console.log('Updating household ID in AuthContext:', data.householdId);
+      await updateHouseholdId(data.householdId);
+    }
+  }, [updateHouseholdId, loginDetails?.householdId]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -65,8 +63,38 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToDashboard }) => {
             style={styles.reminderCard}
             imageStyle={{ borderRadius: 12 }}
           >
-            <Text style={styles.reminderText}>Don’t forget to take your medicines on time.</Text>
+            <Text style={styles.reminderText}>Don't forget to take your medicines on time.</Text>
           </ImageBackground>
+
+          {/* Upcoming Event Section */}
+<View style={styles.eventSection}>
+  <View style={styles.eventHeader}>
+    <Text style={styles.eventTitle}>Upcoming event</Text>
+    <TouchableOpacity>
+      <Text style={styles.seeAll}>see all</Text>
+    </TouchableOpacity>
+  </View>
+
+  <View style={styles.eventCard}>
+    <Text style={styles.eventName}>Semmozhi Poonga Visit</Text>
+    <View style={styles.eventDetailsRow}>
+      <Text style={styles.eventTime}>🕗 08:00 a.m</Text>
+      <Text style={styles.eventDate}>📅 20, Aug, 2025</Text>
+    </View>
+
+    <View style={styles.eventStatusRow}>
+      <View style={styles.statusItem}>
+        <Text style={styles.statusIcon}>✅</Text>
+        <Text style={styles.statusLabel}>Attending</Text>
+      </View>
+      <View style={styles.statusItem}>
+        <Text style={styles.statusIcon}>❌</Text>
+        <Text style={styles.statusLabel}>Not Attending</Text>
+      </View>
+    </View>
+  </View>
+</View>
+
 
           {/* Team Profile Section */}
           <TeamProfileSection
@@ -82,28 +110,18 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToDashboard }) => {
               <Text style={styles.debugText}>Member Name: {headerData.memberName}</Text>
               <Text style={styles.debugText}>Loading: {headerData.isLoading ? 'Yes' : 'No'}</Text>
               <Text style={styles.debugText}>Error: {headerData.hasError ? 'Yes' : 'No'}</Text>
-              <Text style={styles.debugText}>Household ID: {headerData.householdId || 'None'}</Text>
+              <Text style={styles.debugText}>Household ID (Header): {headerData.householdId || 'None'}</Text>
+              <Text style={styles.debugText}>Household ID (Auth): {loginDetails?.householdId || 'None'}</Text>
               <Text style={styles.debugText}>Team Members: {headerData.teamMembers.length}</Text>
             </View>
           )}
-
-          {/* Logout Button */}
-          <View style={styles.mainContent}>
-            <View style={styles.buttonContainer}>
-              <TouchableOpacity
-                style={styles.logoutButton}
-                onPress={handleLogout}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.logoutButtonText}>Logout</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
   );
 };
+
+
 
 const styles = StyleSheet.create({
   container: {
@@ -118,29 +136,104 @@ const styles = StyleSheet.create({
     padding: 24,
     marginTop: -20,
   },
-
-  // Reminder Card
- reminderCard: {
-  marginTop:24,
-  width: '100%',
-  height: 120,
-  borderRadius: 12,
-  overflow: 'hidden',
-  justifyContent: 'center',
-  alignItems: 'center',
+  eventSection: {
   marginBottom: 24,
-  paddingTop: 12,
-  backgroundColor: '#e0f7fa', // fallback if image fails
 },
-reminderText: {
-  color: '#000',
+
+eventHeader: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  marginBottom: 8,
+},
+
+eventTitle: {
   fontSize: 18,
   fontWeight: 'bold',
-  textAlign: 'center',
-  paddingHorizontal: 20,
+  color: '#333',
 },
 
+seeAll: {
+  fontSize: 14,
+  color: '#007bff',
+},
 
+eventCard: {
+  backgroundColor: '#fff',
+  borderRadius: 12,
+  padding: 16,
+  elevation: 2,
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 1 },
+  shadowOpacity: 0.1,
+  shadowRadius: 2,
+  borderColor: '#eee',
+  borderWidth: 1,
+},
+
+eventName: {
+  fontSize: 16,
+  fontWeight: '600',
+  marginBottom: 8,
+  color: '#000',
+},
+
+eventDetailsRow: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  marginBottom: 12,
+},
+
+eventTime: {
+  fontSize: 14,
+  color: '#555',
+},
+
+eventDate: {
+  fontSize: 14,
+  color: '#555',
+},
+
+eventStatusRow: {
+  flexDirection: 'row',
+  justifyContent: 'space-around',
+},
+
+statusItem: {
+  flexDirection: 'row',
+  alignItems: 'center',
+},
+
+statusIcon: {
+  fontSize: 18,
+  marginRight: 6,
+},
+
+statusLabel: {
+  fontSize: 14,
+  color: '#333',
+},
+
+  // Reminder Card
+  reminderCard: {
+    marginTop: 24,
+    width: '100%',
+    height: 120,
+    borderRadius: 12,
+    overflow: 'hidden',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
+    paddingTop: 12,
+    backgroundColor: '#e0f7fa', // fallback if image fails
+  },
+  reminderText: {
+    color: '#000',
+    fontSize: 18,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    paddingHorizontal: 20,
+  },
   // Debug Section Styles
   debugSection: {
     backgroundColor: '#f0f0f0',
@@ -160,37 +253,6 @@ reminderText: {
     fontSize: 12,
     color: '#666',
     marginBottom: 4,
-  },
-
-  // Main Content Styles
-  mainContent: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 20,
-  },
-  buttonContainer: {
-    width: '100%',
-    alignItems: 'center',
-  },
-  logoutButton: {
-    backgroundColor: '#dc3545',
-    paddingHorizontal: 32,
-    paddingVertical: 12,
-    borderRadius: 25,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-  },
-  logoutButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
-    textAlign: 'center',
   },
 });
 

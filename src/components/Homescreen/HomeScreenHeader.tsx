@@ -270,6 +270,11 @@ const HomeScreenHeader: React.FC<HomeScreenHeaderWithDataProps> = ({
     });
   }, [memberName, householdId, teamMembers, isLoading, hasError, onDataLoaded]);
 
+  const handleSeeAllPress = () => {
+    console.log('See All tasks pressed');
+    // Add navigation to tasks screen here
+  };
+
   return (
     <View style={styles.headerContainer}>
       <ImageBackground
@@ -277,14 +282,11 @@ const HomeScreenHeader: React.FC<HomeScreenHeaderWithDataProps> = ({
         style={styles.headerBackground}
         imageStyle={styles.headerBackgroundImage}
       >
-        {/* Header Overlay */}
         <View style={styles.headerOverlay}>
-          {/* Header Content - Welcome Section and Notification */}
           <View style={styles.headerContent}>
             <View style={styles.headerRow}>
               <View style={styles.welcomeSection}>
                 <Text style={styles.welcomeText}>Welcome!</Text>
-
                 {isLoadingMemberName ? (
                   <View style={styles.loadingContainer}>
                     <ActivityIndicator size="small" color="#ffffff" />
@@ -293,22 +295,19 @@ const HomeScreenHeader: React.FC<HomeScreenHeaderWithDataProps> = ({
                 ) : (
                   <>
                     <Text style={styles.memberNameText}>{memberName}</Text>
-                    {/* Display Household ID for supported member types */}
-                    {householdId && (
+                    {householdId || (
                       <Text style={styles.householdIdText}>
-                        Household ID: {householdId}
+                        
                       </Text>
                     )}
                     <Text style={styles.loginTypeText}>
                       Logged in as: {loginDetails?.loginType || 'User'}
                     </Text>
-                    <Text style={styles.loginTypeText}>
+                    {/* <Text style={styles.loginTypeText}>
                       Logged in as: {loginDetails?.id || 'User'}
-                    </Text>
+                    </Text> */}
                   </>
                 )}
-
-                {/* Show error if any API fetch failed */}
                 {hasError && (
                   <Text style={styles.errorText}>
                     Failed to load {loginDetails?.loginType?.toLowerCase()} details
@@ -327,31 +326,34 @@ const HomeScreenHeader: React.FC<HomeScreenHeaderWithDataProps> = ({
               </TouchableOpacity>
             </View>
 
-            {/* Task Card directly in header */}
             {householdId && tasks && tasks.length > 0 && (
               <View style={styles.tasksInHeader}>
+                <View style={styles.taskHeader}>
+                  <Text style={styles.taskHeaderTitle}>Task</Text>
+                  <TouchableOpacity
+                    style={styles.seeAllButton}
+                    onPress={handleSeeAllPress}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.seeAllText}>See All</Text>
+                  </TouchableOpacity>
+                </View>
                 <View style={styles.headerTaskCard}>
-                  {/* Top white section */}
                   <View style={styles.headerTaskTop}>
                     <Text style={styles.headerTaskTitle} numberOfLines={1}>
                       {tasks[0].task_name}
                     </Text>
                   </View>
-
-                  {/* Bottom info section */}
                   <View style={styles.headerTaskBottom}>
                     <View style={styles.headerTaskInfo}>
                       <Text style={styles.headerTaskIcon}>👤</Text>
                       <Text style={styles.headerTaskText}>{tasks[0].empName}</Text>
                     </View>
-
                     <View style={styles.headerTaskDivider} />
-
                     <View style={styles.headerTaskInfo}>
                       <Text style={styles.headerTaskIcon}>🕒</Text>
                       <Text style={styles.headerTaskText}>{tasks[0].time}</Text>
                     </View>
-
                     <Text style={styles.headerTaskDate}>
                       {new Date(tasks[0].date).toLocaleDateString('en-GB', {
                         day: '2-digit',
@@ -366,8 +368,6 @@ const HomeScreenHeader: React.FC<HomeScreenHeaderWithDataProps> = ({
           </View>
         </View>
       </ImageBackground>
-
-      {/* Curved Bottom Shape */}
       <View style={styles.curvedBottom} />
     </View>
   );
@@ -376,7 +376,7 @@ const HomeScreenHeader: React.FC<HomeScreenHeaderWithDataProps> = ({
 const styles = StyleSheet.create({
   headerContainer: {
     position: 'relative',
-    height: 350, // Increased height to accommodate task card
+    height: 340, // Increased height to accommodate task header
   },
   headerBackground: {
     flex: 1,
@@ -415,7 +415,7 @@ const styles = StyleSheet.create({
     opacity: 0.1,
   },
   welcomeSection: {
-    width: '70%',
+    width: '60%',
     alignItems: 'flex-start',
   },
   welcomeText: {
@@ -471,10 +471,31 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
   },
-  // Task card styles in header
   tasksInHeader: {
     marginTop: 20,
     paddingHorizontal: 0,
+  },
+  taskHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  taskHeaderTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#ffffff',
+  },
+  seeAllButton: {
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 12,
+  },
+  seeAllText: {
+    fontSize: 14,
+    color: '#ffffff',
+    fontWeight: '500',
   },
   headerTaskCard: {
     marginHorizontal: 0,

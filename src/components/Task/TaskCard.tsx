@@ -2,12 +2,12 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Task } from '../../../fetching/types/taskTypes';
 
-interface NewTaskCardProps {
+interface TaskCardProps {
   task: Task;
   onTaskPress?: (task: Task) => void;
 }
 
-const NewTaskCard: React.FC<NewTaskCardProps> = ({ task, onTaskPress }) => {
+const TaskCard: React.FC<TaskCardProps> = ({ task, onTaskPress }) => {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-GB', {
@@ -20,6 +20,20 @@ const NewTaskCard: React.FC<NewTaskCardProps> = ({ task, onTaskPress }) => {
     });
   };
 
+  // Determine status style based on task.status
+  const getStatusStyle = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return { color: '#f4a261', backgroundColor: '#ffe8d1' };
+      case 'upcoming':
+        return { color: '#6abf69', backgroundColor: '#e6f3e6' };
+      case 'completed':
+        return { color: '#4a90e2', backgroundColor: '#e6f0fa' };
+      default:
+        return { color: '#f4a261', backgroundColor: '#ffe8d1' }; // Default to pending style
+    }
+  };
+
   return (
     <TouchableOpacity onPress={() => onTaskPress?.(task)} activeOpacity={0.8}>
       <View style={styles.cardContainer}>
@@ -29,7 +43,7 @@ const NewTaskCard: React.FC<NewTaskCardProps> = ({ task, onTaskPress }) => {
             style={styles.avatar}
           />
           <Text style={styles.taskId}>ID: {task.task_id}</Text>
-          <Text style={styles.status}>Pending</Text>
+          <Text style={[styles.status, getStatusStyle(task.status)]}>{task.status}</Text>
         </View>
         <Text style={styles.taskTitle}>{task.task_name}</Text>
         <Text style={styles.description}>
@@ -78,8 +92,6 @@ const styles = StyleSheet.create({
   },
   status: {
     fontSize: 12,
-    color: '#f4a261',
-    backgroundColor: '#ffe8d1',
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 10,
@@ -114,4 +126,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default NewTaskCard;
+export default TaskCard;

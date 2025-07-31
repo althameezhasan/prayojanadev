@@ -6,6 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export interface LoginDetails {
   loginType: string;
   id: number;
+  householdId?: number | null; // Add household ID here
 }
 
 export interface AuthUser {
@@ -26,13 +27,14 @@ export type AuthAction =
   | { type: 'LOGIN_ERROR'; payload: string }
   | { type: 'LOGOUT' }
   | { type: 'CLEAR_ERROR' }
-  | { type: 'RESTORE_AUTH'; payload: AuthUser | null };
+  | { type: 'RESTORE_AUTH'; payload: AuthUser | null }
+  | { type: 'UPDATE_HOUSEHOLD_ID'; payload: number | null }; // New action
 
 // Initial state
 const initialState: AuthState = {
   isAuthenticated: false,
   user: null,
-  isLoading: true, // Start with loading true for auth restoration
+  isLoading: true,
   error: null,
 };
 
@@ -86,6 +88,18 @@ const authReducer = (state: AuthState, action: AuthAction): AuthState => {
         isLoading: false,
       };
 
+    case 'UPDATE_HOUSEHOLD_ID':
+      return {
+        ...state,
+        user: state.user ? {
+          ...state.user,
+          loginDetails: {
+            ...state.user.loginDetails,
+            householdId: action.payload,
+          },
+        } : null,
+      };
+
     default:
       return state;
   }
@@ -98,6 +112,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   clearError: () => void;
   restoreAuth: () => Promise<void>;
+  updateHouseholdId: (householdId: number | null) => Promise<void>; // New function
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -151,6 +166,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error) {
       console.error('Login error:', error);
       dispatch({ type: 'LOGIN_ERROR', payload: 'Failed to login. Please try again.' });
+    }
+  };
+
+  // Update household ID function
+  const updateHouseholdId = async (householdId: number | null) => {
+    try {
+      if (state.user) {
+        const updatedUser: AuthUser = {
+          ...state.user,
+          loginDetails: {
+            ...state.user.loginDetails,
+            householdId,
+          },
+        };
+
+        // Store updated data in AsyncStorage
+        await storeAuthData(updatedUser);
+
+        // Update state
+        dispatch({ type: 'UPDATE_HOUSEHOLD_ID', payload: householdId });
+        
+        console.log('Household ID updated successfully:', householdId);
+      }
+    } catch (error) {
+      console.error('Error updating household ID:', error);
     }
   };
 
@@ -221,6 +261,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     logout,
     clearError,
     restoreAuth,
+    updateHouseholdId, // Add to context value
   };
 
   return (
@@ -239,7 +280,7 @@ export const useAuth = (): AuthContextType => {
   return context;
 };
 
-// Selectors for specific auth data (optional but useful)
+// Selectors for specific auth data
 export const useAuthToken = (): string | null => {
   const { state } = useAuth();
   return state.user?.accessToken || null;
@@ -248,6 +289,11 @@ export const useAuthToken = (): string | null => {
 export const useLoginDetails = (): LoginDetails | null => {
   const { state } = useAuth();
   return state.user?.loginDetails || null;
+};
+
+export const useHouseholdId = (): number | null => {
+  const { state } = useAuth();
+  return state.user?.loginDetails?.householdId || null;
 };
 
 export const useIsAuthenticated = (): boolean => {

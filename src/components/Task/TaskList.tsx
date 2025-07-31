@@ -8,9 +8,9 @@ import {
   RefreshControl,
 } from 'react-native';
 import { Task } from '../../../fetching/types/taskTypes';
-import TaskCard from './TaskCard';
+import NewTaskCard from './TaskCard';
 
-interface TasksListProps {
+interface NewTasksListProps {
   tasks: Task[] | null;
   loading: boolean;
   error: any;
@@ -18,7 +18,7 @@ interface TasksListProps {
   onTaskPress?: (task: Task) => void;
 }
 
-const TasksList: React.FC<TasksListProps> = ({
+const NewTasksList: React.FC<NewTasksListProps> = ({
   tasks,
   loading,
   error,
@@ -26,7 +26,7 @@ const TasksList: React.FC<TasksListProps> = ({
   onTaskPress,
 }) => {
   const renderTaskCard = ({ item }: { item: Task }) => (
-    <TaskCard task={item} onTaskPress={onTaskPress} />
+    <NewTaskCard task={item} onTaskPress={onTaskPress} />
   );
 
   const renderEmptyState = () => (
@@ -50,7 +50,7 @@ const TasksList: React.FC<TasksListProps> = ({
   if (loading && !tasks) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#007C91" />
+        <ActivityIndicator size="large" color="#00796b" />
         <Text style={styles.loadingText}>Loading tasks...</Text>
       </View>
     );
@@ -62,15 +62,6 @@ const TasksList: React.FC<TasksListProps> = ({
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Household Tasks</Text>
-        {tasks && (
-          <Text style={styles.taskCount}>
-            {tasks.length} task{tasks.length !== 1 ? 's' : ''}
-          </Text>
-        )}
-      </View>
-      
       <FlatList
         data={tasks || []}
         renderItem={renderTaskCard}
@@ -81,7 +72,7 @@ const TasksList: React.FC<TasksListProps> = ({
             <RefreshControl
               refreshing={loading}
               onRefresh={onRefresh}
-              colors={['#007C91']}
+              colors={['#00796b']}
             />
           ) : undefined
         }
@@ -98,26 +89,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f9fa',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    backgroundColor: '#ffffff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#1a1a1a',
-  },
-  taskCount: {
-    fontSize: 14,
-    color: '#666',
-    fontWeight: '500',
   },
   loadingContainer: {
     flex: 1,
@@ -171,4 +142,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default TasksList;
+export default NewTasksList;
