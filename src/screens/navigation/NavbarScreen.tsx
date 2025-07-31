@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, StatusBar, Image } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import HomeScreen from '../dashboard/HomeScreen';
-import ProfileScreen from '../profile/ProfileScreen'; // Import the ProfileScreen
+import ProfileScreen from '../Profile/ProfileScreen'; // Import the ProfileScreen
 
 export type NavScreen = 'home' | 'task' | 'profile' | 'Interactions';
 
