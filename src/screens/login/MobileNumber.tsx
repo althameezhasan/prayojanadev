@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 // src/screens/login/MobileNumber.tsx
 import React, { useEffect, useState } from 'react';
 import {
@@ -55,7 +56,7 @@ const MobileInputScreen: React.FC<MobileInputScreenProps> = ({
       console.log('Sending login request...');
 
       handleSignin({
-        url: 'https://kwnfmv39-443.inc1.devtunnels.ms/api/auth/membersignin',
+        url: 'https://sb76775n-443.inc1.devtunnels.ms/api/auth/membersignin',
         method: 'POST',
         data: {
           phone: `+91${mobileNumber}`,
@@ -65,16 +66,17 @@ const MobileInputScreen: React.FC<MobileInputScreenProps> = ({
   };
 
   // Handle response and errors
-  useEffect(() => {
-    if (isSigned) {
-      console.log('Login successful:', responseLogin);
-      onSubmit(mobileNumber, responseLogin);
-    }
+ useEffect(() => {
+  if (isSigned) {
+    console.log('Login successful:', responseLogin);
+    onSubmit(mobileNumber, responseLogin);
+  }
 
-    if (errorForSignin) {
-      console.error('Login failed:', errorForSignin);
-    }
-  }, [isSigned, errorForSignin, mobileNumber, onSubmit]);
+  if (errorForSignin) {
+    console.error('Login failed:', errorForSignin);
+  }
+}, [isSigned, errorForSignin, responseLogin, mobileNumber, onSubmit]);
+
 
   return (
     <SafeAreaView style={styles.container}>

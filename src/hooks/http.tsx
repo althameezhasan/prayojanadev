@@ -3,6 +3,7 @@ import axios, { AxiosRequestConfig } from 'axios';
 
 // Define types for common API responses
 interface LoginResponse {
+  authenticated: boolean;
   message?: {
     statusMsg?: string;
     accessToken?: string;

@@ -1,15 +1,15 @@
 // App.tsx
 import React, { useState, useEffect } from 'react';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, ActivityIndicator, StyleSheet, Alert } from 'react-native';
 import { AuthProvider, useAuth, useIsAuthenticated, useAuthLoading } from './src/context/AuthContext';
 import SplashScreen from './src/screens/login/SplashScreen';
 import SelectScreen from './src/screens/login/SelectScreen';
 import MobileInputScreen from './src/screens/login/MobileNumber';
 import OTPInputScreen from './src/screens/login/OTPInputScreen';
+import AuthenticatorScreen from './src/screens/login/AuthenticatorLoginScreen.';
 import NavbarScreen from './src/screens/navigation/NavbarScreen';
 
-
-export type AuthScreen = 'splash' | 'select' | 'mobile' | 'otp';
+export type AuthScreen = 'splash' | 'select' | 'mobile' | 'otp' | 'authenticator';
 
 interface NavigationState {
   currentScreen: AuthScreen;
@@ -19,7 +19,7 @@ interface NavigationState {
 
 // Main App Content Component
 const AppContent: React.FC = () => {
-  const { logout, state } = useAuth();
+  useAuth();
   const isAuthenticated = useIsAuthenticated();
   const isAuthLoading = useAuthLoading();
   
@@ -73,12 +73,25 @@ const AppContent: React.FC = () => {
     navigateToScreen('mobile');
   };
 
+  const handleAuthenticatorLogin = () => {
+    navigateToScreen('authenticator');
+  };
+
   const handleMobileSubmit = (number: string, otpData?: any) => {
     navigateToScreen('otp', {
       mobileNumber: number,
       otpData: otpData
     });
   };
+
+  const handleAuthenticatorSubmit = (code: string) => {
+  console.log('Authenticator code received:', code);
+
+  Alert.alert('Success', 'Authenticator code verified successfully!');
+  
+  // Add real logic here (e.g., navigate to home)
+};
+
 
   const handleBackToMobile = () => {
     navigateToScreen('mobile', {
@@ -97,7 +110,12 @@ const AppContent: React.FC = () => {
   const renderAuthScreen = () => {
     switch (navState.currentScreen) {
       case 'select':
-        return <SelectScreen onGetStarted={handleGetStarted} />;
+        return (
+          <SelectScreen 
+            onGetStarted={handleGetStarted} 
+            onAuthenticatorLogin={handleAuthenticatorLogin}
+          />
+        );
       
       case 'mobile':
         return (
@@ -119,8 +137,21 @@ const AppContent: React.FC = () => {
           />
         );
       
+      case 'authenticator':
+        return (
+          <AuthenticatorScreen
+            onBack={handleBackToSelect}
+            onSuccess={handleAuthenticatorSubmit} 
+          />
+        );
+      
       default:
-        return <SelectScreen onGetStarted={handleGetStarted} />;
+        return (
+          <SelectScreen 
+            onGetStarted={handleGetStarted} 
+            onAuthenticatorLogin={handleAuthenticatorLogin}
+          />
+        );
     }
   };
 
