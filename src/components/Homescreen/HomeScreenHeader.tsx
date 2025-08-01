@@ -375,6 +375,7 @@ const HomeScreenHeader: React.FC<HomeScreenHeaderWithDataProps> = ({
 
 const styles = StyleSheet.create({
   headerContainer: {
+    // position: 'relative',
     position: 'relative',
     height: 340, // Increased height to accommodate task header
   },
