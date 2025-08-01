@@ -11,7 +11,7 @@ import {
 import { useHouseholdId, useAuthToken } from '../../context/AuthContext';
 import { Task } from '../../../fetching/types/taskTypes';
 import { useHouseholdTasks } from '../../hooks/useHouseholdTasks';
-import NewTasksList from '../../components/Task/TaskList';
+import TasksList from '../../components/Task/TaskList'; // Import the merged component
 
 const TaskScreen: React.FC = () => {
   const householdId = useHouseholdId();
@@ -30,18 +30,89 @@ const TaskScreen: React.FC = () => {
   }, []);
 
   const handleTaskPress = useCallback(async (task: Task) => {
-    console.log('Task pressed:', task.task_name);
-    Alert.alert(
-      task.task_name,
-      `Employee: ${task.empName}\nLocation: ${task.location}\nTime: ${task.time}\nDate: ${new Date(task.date).toLocaleDateString()}\nStatus: ${task.status}\n\nNotes: ${task.notes || 'No notes available'}`,
-      [{ text: 'OK' }]
-    );
+    try {
+      console.log('Task pressed:', task.task_name);
+      
+      // Safe data extraction for alert
+      const taskName = task?.task_name || 'Unknown Task';
+      const empName = task?.empName || 'Unknown';
+      const location = task?.location || 'Unknown location';
+      const time = task?.time || 'Unknown time';
+      const status = task?.status || 'Unknown status';
+      const notes = task?.notes || 'No notes available';
+      
+      let dateString = 'Unknown date';
+      try {
+        if (task?.date) {
+          const date = new Date(task.date);
+          if (!isNaN(date.getTime())) {
+            dateString = date.toLocaleDateString();
+          }
+        }
+      } catch (dateError) {
+        console.error('Date parsing error:', dateError);
+      }
+
+      Alert.alert(
+        taskName,
+        `Employee: ${empName}\nLocation: ${location}\nTime: ${time}\nDate: ${dateString}\nStatus: ${status}\n\nNotes: ${notes}`,
+        [{ text: 'OK' }]
+      );
+    } catch (error) {
+      console.error('Error handling task press:', error);
+      Alert.alert(
+        'Error',
+        'There was an error displaying task details.',
+        [{ text: 'OK' }]
+      );
+    }
   }, []);
 
-  // Filter tasks based on the active tab
-  const filteredTasks = tasks
-    ? tasks.filter((task) => task.status === activeTab)
-    : [];
+  // Safe task filtering with comprehensive error handling
+  const filteredTasks = React.useMemo(() => {
+    try {
+      if (!tasks || !Array.isArray(tasks)) {
+        console.log('No tasks available or tasks is not an array:', tasks);
+        return [];
+      }
+
+      const filtered = tasks.filter((task) => {
+        try {
+          if (!task || typeof task !== 'object') {
+            console.warn('Invalid task object:', task);
+            return false;
+          }
+          
+          const taskStatus = String(task.status || '').toLowerCase();
+          const activeTabLower = activeTab.toLowerCase();
+          
+          return taskStatus === activeTabLower;
+        } catch (filterError) {
+          console.error('Error filtering individual task:', filterError);
+          return false;
+        }
+      });
+
+      console.log(`Filtered tasks for "${activeTab}":`, filtered.length);
+      return filtered;
+    } catch (error) {
+      console.error('Error filtering tasks:', error);
+      return [];
+    }
+  }, [tasks, activeTab]);
+
+  // Debug logging
+  React.useEffect(() => {
+    console.log('TaskScreen Debug Info:', {
+      householdId,
+      hasToken: !!token,
+      tasksCount: tasks?.length || 0,
+      loading,
+      error: error?.message || error,
+      activeTab,
+      filteredCount: filteredTasks.length,
+    });
+  }, [householdId, token, tasks, loading, error, activeTab, filteredTasks]);
 
   if (!householdId) {
     return (
@@ -63,25 +134,43 @@ const TaskScreen: React.FC = () => {
         style={styles.topBanner}
         resizeMode="cover"
       >
-        <TouchableOpacity style={styles.backArrow} onPress={() => console.log('Back pressed')}>
+        <TouchableOpacity 
+          style={styles.backArrow} 
+          onPress={() => console.log('Back pressed')}
+        >
           <Text style={styles.backArrowText}>←</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Tasks</Text>
       </ImageBackground>
 
       <View style={styles.tabContainer}>
-        <TouchableOpacity onPress={() => setActiveTab('Planned')}>
-          <Text style={activeTab === 'Planned' ? styles.tabActive : styles.tab}>Planned</Text>
+        <TouchableOpacity 
+          onPress={() => setActiveTab('Planned')}
+          style={styles.tabButton}
+        >
+          <Text style={activeTab === 'Planned' ? styles.tabActive : styles.tab}>
+            Planned
+          </Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => setActiveTab('Upcoming')}>
-          <Text style={activeTab === 'Upcoming' ? styles.tabActive : styles.tab}>Upcoming</Text>
+        <TouchableOpacity 
+          onPress={() => setActiveTab('Upcoming')}
+          style={styles.tabButton}
+        >
+          <Text style={activeTab === 'Upcoming' ? styles.tabActive : styles.tab}>
+            Upcoming
+          </Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => setActiveTab('Completed')}>
-          <Text style={activeTab === 'Completed' ? styles.tabActive : styles.tab}>Completed</Text>
+        <TouchableOpacity 
+          onPress={() => setActiveTab('Completed')}
+          style={styles.tabButton}
+        >
+          <Text style={activeTab === 'Completed' ? styles.tabActive : styles.tab}>
+            Completed
+          </Text>
         </TouchableOpacity>
       </View>
 
-      <NewTasksList
+      <TasksList
         tasks={filteredTasks}
         loading={loading}
         error={error}
@@ -128,24 +217,34 @@ const styles = StyleSheet.create({
   tabContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    paddingVertical: 10,
+    paddingVertical: 12,
     backgroundColor: '#e0f7f9',
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
+  },
+  tabButton: {
+    flex: 1,
+    alignItems: 'center',
   },
   tabActive: {
     fontSize: 16,
     fontWeight: '600',
     color: '#00796b',
-    paddingVertical: 5,
-    paddingHorizontal: 15,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
     backgroundColor: '#fff',
-    borderRadius: 15,
+    borderRadius: 20,
+    textAlign: 'center',
+    minWidth: 80,
   },
   tab: {
     fontSize: 16,
     fontWeight: '500',
     color: '#666',
-    paddingVertical: 5,
-    paddingHorizontal: 15,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    textAlign: 'center',
+    minWidth: 80,
   },
   errorContainer: {
     flex: 1,

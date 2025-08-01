@@ -52,7 +52,32 @@ export const useMemberInfo = ({
         const data = await MemberInfoApiService.fetchMemberInfo(memberId, userToken);
         
         console.log('🎉 MemberInfo Hook Success!');
-        console.log('📋 Member Array Data:', data.message.data.memberArr);
+        console.log('📋 New API Response Structure:', {
+          memberId: data.message.data.memberId,
+          memberName: data.message.data.memberName,
+          householdCount: data.message.data.household?.length || 0,
+          relativeDataCount: data.message.data.relativeData?.length || 0,
+          captainsCount: data.message.data.captains?.length || 0,
+          carebuddiesCount: data.message.data.carebuddies?.length || 0,
+        });
+        
+        // Log detailed structure for debugging
+        if (data.message.data.household && data.message.data.household.length > 0) {
+          console.log('🏠 Household Data:', data.message.data.household[0]);
+        }
+        
+        if (data.message.data.captains && data.message.data.captains.length > 0) {
+          console.log('👮 Captains Data:', data.message.data.captains);
+        }
+        
+        if (data.message.data.carebuddies && data.message.data.carebuddies.length > 0) {
+          console.log('👨‍⚕️ Care Buddies Data:', data.message.data.carebuddies);
+        }
+        
+        // Legacy compatibility logging
+        if (data.message.data.memberArr) {
+          console.log('📋 Legacy Member Array Data:', data.message.data.memberArr);
+        }
         
         setMemberInfo(data);
       } catch (err) {
@@ -63,7 +88,6 @@ export const useMemberInfo = ({
         setLoading(false);
       }
     };
-
     fetchMemberInfo();
   }, [memberId, userToken, shouldFetch]);
 

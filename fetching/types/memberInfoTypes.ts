@@ -12,6 +12,36 @@ export interface MemberInfoCaptain {
   id: number;
 }
 
+// Updated household structure
+export interface MemberInfoHousehold {
+  household_id: number;
+  houseHoldName: string;
+  mobileNum: string;
+  location: string;
+  city: string;
+  telephone_no: string;
+  landline_num: string;
+  address: string;
+  emergencyContact: string;
+}
+
+// Updated relative data structure
+export interface MemberInfoRelativeData {
+  relation_id: number;
+  relatedMemberId: string;
+  household_id: number;
+  name: string;
+  address: string;
+  notes: string;
+  phone: string;
+  whatsapp_num: string | null;
+  alternate_num: string | null;
+  type: string;
+  email: string | null;
+  is_sponser: boolean;
+}
+
+// Updated member structure based on new API response
 export interface MemberInfoMember {
   memberName: string;
   memberId: number;
@@ -31,41 +61,53 @@ export interface MemberInfoMember {
   };
 }
 
+// Updated response structure to match new API
 export interface MemberInfoResponse {
   message: {
-    success: boolean;
     data: {
-      household_id: number;
+      memberId: number;
+      memberName: string;
       phone: string;
-      notes: string;
       email: string | null;
-      houseHoldName: string;
-      mobileNum: string;
-      location: string;
-      city: string;
+      notes: string;
       telephone_no: string;
-      landline_num: string;
-      address: string;
-      emergencyContact: string;
-      pridNo: string;
-      validTill: string;
-      planType: string;
-      plan_icon: string;
-      status: string;
+      health_condition: string;
+      gender: string;
+      bloodGroup: string;
+      dob: string;
+      memberPic: string;
+      reference_status_name: string;
+      reference_status_id: string;
+      reference_status_type: string;
+      household: MemberInfoHousehold[];
+      relativeData: MemberInfoRelativeData[];
+      captains: MemberInfoCaptain[];
+      carebuddies: MemberInfoCarebuddy[];
+      
+      // Legacy fields for backward compatibility (if needed)
+      household_id?: number;
+      memberArr?: MemberInfoMember[];
+      captain?: MemberInfoCaptain;
+      carebuddyObj?: MemberInfoCarebuddy[];
+      houseHoldName?: string;
+      mobileNum?: string;
+      location?: string;
+      city?: string;
+      landline_num?: string;
+      address?: string;
+      emergencyContact?: string;
+      pridNo?: string;
+      validTill?: string;
+      planType?: string;
+      plan_icon?: string;
+      status?: string;
       careBuddyProfilePic?: string;
       carebuddyType?: string;
       carebuddyName?: string;
       captain_emp_id?: string;
       captain_user_id?: number;
-      health_condition?: string;
-      blood_group?: string;
-      reference_status_name?: string;
-      reference_status_id?: string;
-      memberArr: MemberInfoMember[];
-      plan_name: string;
-      captain: MemberInfoCaptain;
-      carebuddyObj: MemberInfoCarebuddy[];
-      duration: string;
+      plan_name?: string;
+      duration?: string;
     };
   };
 }

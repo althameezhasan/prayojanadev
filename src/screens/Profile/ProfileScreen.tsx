@@ -14,7 +14,7 @@ import { useAuth, useLoginDetails, useAuthToken } from '../../context/AuthContex
 import { useMemberInfo } from '../../hooks/useMemberInfo';
 import { useRelativeInfo } from '../../hooks/useRelativeInfo';
 import { usePayingChildInfo } from '../../hooks/usePayingChildInfo';
-import { MemberInfoMember, MemberInfoCarebuddy } from '../../../fetching/types/memberInfoTypes';
+import { MemberInfoMember, MemberInfoCarebuddy, MemberInfoResponse } from '../../../fetching/types/memberInfoTypes';
 import { RelativeInfoResponse } from '../../../fetching/types/relativeInfoTypes';
 import { PayingChildInfoResponse } from '../../../fetching/types/payingChildInfoTypes';
 
@@ -102,12 +102,9 @@ const ProfileScreen: React.FC = () => {
     );
 
     if (shouldFetchMemberInfo && initialMemberInfo && loginDetails?.id) {
-      const currentMember = initialMemberInfo.message.data.memberArr.find(
-        (member) => member.memberId === loginDetails.id
-      );
       setProfileData({
-        name: currentMember ? currentMember.memberName : 'Member',
-        memberId: loginDetails.id,
+        name: initialMemberInfo.message.data.memberName || 'Member',
+        memberId: initialMemberInfo.message.data.memberId || loginDetails.id,
         memberType: loginDetails.loginType,
       });
     }
@@ -164,7 +161,17 @@ const ProfileScreen: React.FC = () => {
       console.log('🎯 =================================');
       console.log('🎯 MEMBER DETAILS API RESPONSE');
       console.log('🎯 =================================');
-      console.log('👥 Member Array:', JSON.stringify(detailedMemberInfo.message.data.memberArr, null, 2));
+      console.log('👤 Member:', JSON.stringify({
+        memberId: detailedMemberInfo.message.data.memberId,
+        memberName: detailedMemberInfo.message.data.memberName,
+        phone: detailedMemberInfo.message.data.phone,
+        email: detailedMemberInfo.message.data.email,
+        health_condition: detailedMemberInfo.message.data.health_condition,
+        gender: detailedMemberInfo.message.data.gender,
+        dob: detailedMemberInfo.message.data.dob,
+      }, null, 2));
+      console.log('🏠 Household:', JSON.stringify(detailedMemberInfo.message.data.household, null, 2));
+      console.log('👥 Legacy Member Array:', JSON.stringify(detailedMemberInfo.message.data.memberArr, null, 2));
       console.log('🎯 =================================');
     }
   }, [shouldFetchMemberDetails, detailedMemberInfo, detailedMemberLoading, detailedMemberError]);
@@ -174,8 +181,8 @@ const ProfileScreen: React.FC = () => {
       console.log('🎯 =================================');
       console.log('🎯 TEAM DETAILS API RESPONSE');
       console.log('🎯2174');
-      console.log('🤝 Carebuddy Object:', JSON.stringify(teamMemberInfo.message.data.carebuddyObj, null, 2));
-      console.log('👮 Captain Object:', JSON.stringify(teamMemberInfo.message.data.captain, null, 2));
+      console.log('🤝 Carebuddy Object:', JSON.stringify(teamMemberInfo.message.data.carebuddies, null, 2));
+      console.log('👮 Captain Object:', JSON.stringify(teamMemberInfo.message.data.captains, null, 2));
       console.log('🎯 =================================');
     }
   }, [shouldFetchTeamDetails, teamMemberInfo, teamMemberLoading, teamMemberError]);
@@ -241,15 +248,29 @@ const ProfileScreen: React.FC = () => {
   // Get current member data for personal details
   const getCurrentMemberData = () => {
     if (shouldFetchMemberInfo && initialMemberInfo && loginDetails?.id) {
-      return initialMemberInfo.message.data.memberArr.find(
-        (member) => member.memberId === loginDetails.id
-      );
+      return {
+        memberName: initialMemberInfo.message.data.memberName,
+        memberId: initialMemberInfo.message.data.memberId,
+        phone: initialMemberInfo.message.data.phone,
+        telephone_no: initialMemberInfo.message.data.telephone_no,
+        memberDob: initialMemberInfo.message.data.dob,
+        memberGender: initialMemberInfo.message.data.gender,
+        blood_group: initialMemberInfo.message.data.bloodGroup,
+        email: initialMemberInfo.message.data.email,
+        health_condition: initialMemberInfo.message.data.health_condition,
+        memberPic: initialMemberInfo.message.data.memberPic,
+        reference_status: {
+          name: initialMemberInfo.message.data.reference_status_name,
+          id: initialMemberInfo.message.data.reference_status_id,
+          reference_status_type: initialMemberInfo.message.data.reference_status_type,
+        },
+      };
     }
     return null;
   };
 
   // Render Member Info Card
-  const renderMemberInfoCard = (member: MemberInfoMember, index: number) => (
+  const renderMemberInfoCard = (member: MemberInfoMember | MemberInfoResponse['message']['data'], index: number) => (
     <View key={index} style={styles.infoCard}>
       <View style={styles.cardHeader}>
         <View style={styles.memberImageContainer}>
@@ -267,12 +288,12 @@ const ProfileScreen: React.FC = () => {
           <Text style={styles.memberName}>{member.memberName}</Text>
           <Text style={styles.memberDetail}>ID: {member.memberId}</Text>
           <Text style={styles.memberDetail}>Phone: {member.phone}</Text>
-          <Text style={styles.memberDetail}>Gender: {member.memberGender}</Text>
-          <Text style={styles.memberDetail}>DOB: {member.memberDob}</Text>
+          {/* <Text style={styles.memberDetail}>Gender: {member.g || member.gender}</Text> */}
+          {/* <Text style={styles.memberDetail}>DOB: {member.dob || member.dob}</Text> */}
           <Text style={[styles.memberDetail, { color: getHealthColor(member.health_condition) }]}>
             Health: {member.health_condition}
           </Text>
-          <Text style={styles.memberDetail}>Status: {member.reference_status.name}</Text>
+          {/* <Text style={styles.memberDetail}>Status: {member.reference_status?.name || member.reference_status_name}</Text> */}
         </View>
       </View>
     </View>
@@ -533,10 +554,17 @@ const ProfileScreen: React.FC = () => {
               <Text style={styles.errorText}>Error loading member information</Text>
               <Text style={styles.memberDetail}>Failed to load data: {detailedMemberError.message}</Text>
             </View>
-          ) : detailedMemberInfo?.message.data.memberArr ? (
-            detailedMemberInfo.message.data.memberArr.map((member, index) => 
-              renderMemberInfoCard(member, index)
-            )
+          ) : detailedMemberInfo?.message.data ? (
+            <>
+              {/* Render primary member data */}
+              {renderMemberInfoCard(detailedMemberInfo.message.data, 0)}
+              {/* Render legacy memberArr if present for backward compatibility */}
+              {detailedMemberInfo.message.data.memberArr && detailedMemberInfo.message.data.memberArr.length > 0 && (
+                detailedMemberInfo.message.data.memberArr.map((member, index) => 
+                  renderMemberInfoCard(member, index + 1)
+                )
+              )}
+            </>
           ) : (
             <View style={styles.infoCard}>
               <Text style={styles.memberDetail}>No member information available</Text>
@@ -584,40 +612,43 @@ const ProfileScreen: React.FC = () => {
             </View>
           ) : (
             <>
-              {teamMemberInfo?.message.data.captain && (
+              {teamMemberInfo?.message.data.captains && teamMemberInfo.message.data.captains.length > 0 && (
                 <View style={styles.sectionContainer}>
-                  <Text style={styles.sectionTitle}>Captain</Text>
-                  <View style={styles.infoCard}>
-                    <View style={styles.cardHeader}>
-                      <View style={styles.memberImageContainer}>
-                        {teamMemberInfo.message.data.captain.profilePic ? (
-                          <Image source={{ uri: teamMemberInfo.message.data.captain.profilePic }} style={styles.memberImage} />
-                        ) : (
-                          <View style={styles.memberImagePlaceholder}>
-                            <Text style={styles.memberImageText}>
-                              {teamMemberInfo.message.data.captain.name.charAt(0).toUpperCase()}
-                            </Text>
-                          </View>
-                        )}
-                      </View>
-                      <View style={styles.memberInfoContainer}>
-                        <Text style={styles.memberName}>{teamMemberInfo.message.data.captain.name}</Text>
-                        <Text style={styles.memberDetail}>Employee ID: {teamMemberInfo.message.data.captain.empId}</Text>
-                        <Text style={styles.memberDetail}>User ID: {teamMemberInfo.message.data.captain.id}</Text>
+                  <Text style={styles.sectionTitle}>Captains</Text>
+                  {teamMemberInfo.message.data.captains.map((captain, index) => (
+                    <View key={index} style={styles.infoCard}>
+                      <View style={styles.cardHeader}>
+                        <View style={styles.memberImageContainer}>
+                          {captain.profilePic ? (
+                            <Image source={{ uri: captain.profilePic }} style={styles.memberImage} />
+                          ) : (
+                            <View style={styles.memberImagePlaceholder}>
+                              <Text style={styles.memberImageText}>
+                                {captain.name.charAt(0).toUpperCase()}
+                              </Text>
+                            </View>
+                          )}
+                        </View>
+                        <View style={styles.memberInfoContainer}>
+                          <Text style={styles.memberName}>{captain.name}</Text>
+                          <Text style={styles.memberDetail}>Employee ID: {captain.empId}</Text>
+                          <Text style={styles.memberDetail}>User ID: {captain.id}</Text>
+                        </View>
                       </View>
                     </View>
-                  </View>
+                  ))}
                 </View>
               )}
-              {teamMemberInfo?.message.data.carebuddyObj && teamMemberInfo.message.data.carebuddyObj.length > 0 && (
+              {teamMemberInfo?.message.data.carebuddies && teamMemberInfo.message.data.carebuddies.length > 0 && (
                 <View style={styles.sectionContainer}>
                   <Text style={styles.sectionTitle}>Care Buddies</Text>
-                  {teamMemberInfo.message.data.carebuddyObj.map((carebuddy, index) => 
+                  {teamMemberInfo.message.data.carebuddies.map((carebuddy, index) => 
                     renderCareBuddyCard(carebuddy, index)
                   )}
                 </View>
               )}
-              {(!teamMemberInfo?.message.data.captain && (!teamMemberInfo?.message.data.carebuddyObj || teamMemberInfo.message.data.carebuddyObj.length === 0)) && (
+              {(!teamMemberInfo?.message.data.captains || teamMemberInfo.message.data.captains.length === 0) && 
+               (!teamMemberInfo?.message.data.carebuddies || teamMemberInfo.message.data.carebuddies.length === 0) && (
                 <View style={styles.infoCard}>
                   <Text style={styles.memberDetail}>No team information available</Text>
                 </View>
@@ -1007,55 +1038,55 @@ const ProfileScreen: React.FC = () => {
             </>
           )}
         </View>
-      <View style={styles.menu}>
-  <TouchableOpacity 
-    style={styles.menuItem}
-    onPress={handleMemberInfoPress}
-  >
-    <Text style={styles.menuText}>Member Information</Text>
-    <Text style={styles.menuArrow}>›</Text>
-  </TouchableOpacity>
-  <TouchableOpacity 
-    style={styles.menuItem}
-    onPress={handlePersonalDetailsPress}
-  >
-    <Text style={styles.menuText}>Personal Details</Text>
-    <Text style={styles.menuArrow}>›</Text>
-  </TouchableOpacity>
-  <TouchableOpacity 
-    style={styles.menuItem}
-    onPress={handleSponsorDetailsPress}
-  >
-    <Text style={styles.menuText}>Sponsor Details</Text>
-    <Text style={styles.menuArrow}>›</Text>
-  </TouchableOpacity>
-  <TouchableOpacity 
-    style={styles.menuItem}
-    onPress={handleTeamInfoPress}
-  >
-    <Text style={styles.menuText}>Team Information</Text>
-    <Text style={styles.menuArrow}>›</Text>
-  </TouchableOpacity>
-  {profileData.memberType !== 'Relative' && (
-    <TouchableOpacity 
-      style={styles.menuItem}
-      onPress={handleRelativeInfoPress}
-    >
-      <Text style={styles.menuText}>Relative Information</Text>
-      <Text style={styles.menuArrow}>›</Text>
-    </TouchableOpacity>
-  )}
-  {showRelativesTab && (
-    <TouchableOpacity style={styles.menuItem}>
-      <Text style={styles.menuText}>Relatives</Text>
-      <Text style={styles.menuArrow}>›</Text>
-    </TouchableOpacity>
-  )}
-  <TouchableOpacity style={styles.menuItem}>
-    <Text style={styles.menuText}>Health Information</Text>
-    <Text style={styles.menuArrow}>›</Text>
-  </TouchableOpacity>
-</View>
+        <View style={styles.menu}>
+          <TouchableOpacity 
+            style={styles.menuItem}
+            onPress={handleMemberInfoPress}
+          >
+            <Text style={styles.menuText}>Member Information</Text>
+            <Text style={styles.menuArrow}>›</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.menuItem}
+            onPress={handlePersonalDetailsPress}
+          >
+            <Text style={styles.menuText}>Personal Details</Text>
+            <Text style={styles.menuArrow}>›</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.menuItem}
+            onPress={handleSponsorDetailsPress}
+          >
+            <Text style={styles.menuText}>Sponsor Details</Text>
+            <Text style={styles.menuArrow}>›</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.menuItem}
+            onPress={handleTeamInfoPress}
+          >
+            <Text style={styles.menuText}>Team Information</Text>
+            <Text style={styles.menuArrow}>›</Text>
+          </TouchableOpacity>
+          {profileData.memberType !== 'Relative' && (
+            <TouchableOpacity 
+              style={styles.menuItem}
+              onPress={handleRelativeInfoPress}
+            >
+              <Text style={styles.menuText}>Relative Information</Text>
+              <Text style={styles.menuArrow}>›</Text>
+            </TouchableOpacity>
+          )}
+          {showRelativesTab && (
+            <TouchableOpacity style={styles.menuItem}>
+              <Text style={styles.menuText}>Relatives</Text>
+              <Text style={styles.menuArrow}>›</Text>
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity style={styles.menuItem}>
+            <Text style={styles.menuText}>Health Information</Text>
+            <Text style={styles.menuArrow}>›</Text>
+          </TouchableOpacity>
+        </View>
       </ScrollView>
       <View style={styles.buttonContainer}>
         <TouchableOpacity

@@ -1,8 +1,8 @@
 import { API_URL } from '../../src/constants';
 import { TaskResponse } from '../types/taskTypes';
 
-const BASE_URL = API_URL+'prayojana/member/householdtask';
-
+const BASE_URL = API_URL+'member/householdtask';
+console.log(BASE_URL);
 export class TaskApiService {
   static async fetchHouseholdTasks(householdId: number, userToken?: string | null): Promise<TaskResponse> {
     const url = `${BASE_URL}/${householdId}`;

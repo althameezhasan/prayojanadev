@@ -8,22 +8,42 @@ interface TaskCardProps {
 }
 
 const TaskCard: React.FC<TaskCardProps> = ({ task, onTaskPress }) => {
+  // Add safety checks for all data
+  const safeTask = {
+    task_id: task?.task_id ?? 'N/A',
+    task_name: task?.task_name ?? 'Unnamed Task',
+    status: task?.status ?? 'pending',
+    notes: task?.notes ?? 'No description available',
+    empName: task?.empName ?? 'Unknown',
+    date: task?.date ?? new Date().toISOString(),
+  };
+
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-GB', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true,
-    });
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        return 'Invalid Date';
+      }
+      return date.toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true,
+      });
+    } catch (error) {
+      console.error('Date formatting error:', error);
+      return 'Invalid Date';
+    }
   };
 
   // Determine status style based on task.status
   const getStatusStyle = (status: string) => {
-    switch (status.toLowerCase()) {
+    const statusLower = String(status).toLowerCase(); // Ensure it's a string
+    switch (statusLower) {
       case 'pending':
+      case 'planned':
         return { color: '#f4a261', backgroundColor: '#ffe8d1' };
       case 'upcoming':
         return { color: '#6abf69', backgroundColor: '#e6f3e6' };
@@ -34,32 +54,44 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onTaskPress }) => {
     }
   };
 
-  return (
-    <TouchableOpacity onPress={() => onTaskPress?.(task)} activeOpacity={0.8}>
+  // Add error boundary for the entire card
+  try {
+    return (
+      <TouchableOpacity onPress={() => onTaskPress?.(task)} activeOpacity={0.8}>
+        <View style={styles.cardContainer}>
+          <View style={styles.header}>
+            <Image
+              source={{ uri: 'https://via.placeholder.com/50' }}
+              style={styles.avatar}
+            />
+            <Text style={styles.taskId}>ID: {String(safeTask.task_id)}</Text>
+            <Text style={[styles.status, getStatusStyle(safeTask.status)]}>
+              {String(safeTask.status)}
+            </Text>
+          </View>
+          <Text style={styles.taskTitle}>{String(safeTask.task_name)}</Text>
+          <Text style={styles.description}>
+            {String(safeTask.notes)}
+          </Text>
+          <View style={styles.details}>
+            <Text style={styles.detailText}>Care buddy</Text>
+            <Text style={styles.detailText}>{String(safeTask.empName)}</Text>
+          </View>
+          <View style={styles.dateContainer}>
+            <Text style={styles.dateText}>Date</Text>
+            <Text style={styles.dateText}>{formatDate(safeTask.date)}</Text>
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  } catch (error) {
+    console.error('TaskCard rendering error:', error);
+    return (
       <View style={styles.cardContainer}>
-        <View style={styles.header}>
-          <Image
-            source={{ uri: 'https://via.placeholder.com/50' }} // Replace with actual image URL or local asset
-            style={styles.avatar}
-          />
-          <Text style={styles.taskId}>ID: {task.task_id}</Text>
-          <Text style={[styles.status, getStatusStyle(task.status)]}>{task.status}</Text>
-        </View>
-        <Text style={styles.taskTitle}>{task.task_name}</Text>
-        <Text style={styles.description}>
-          {task.notes || 'No description available'}
-        </Text>
-        <View style={styles.details}>
-          <Text style={styles.detailText}>Care buddy</Text>
-          <Text style={styles.detailText}>{task.empName}</Text>
-        </View>
-        <View style={styles.dateContainer}>
-          <Text style={styles.dateText}>Date</Text>
-          <Text style={styles.dateText}>{formatDate(task.date)}</Text>
-        </View>
+        <Text style={styles.errorText}>Error rendering task</Text>
       </View>
-    </TouchableOpacity>
-  );
+    );
+  }
 };
 
 const styles = StyleSheet.create({
@@ -123,6 +155,12 @@ const styles = StyleSheet.create({
   dateText: {
     fontSize: 14,
     color: '#666',
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#dc3545',
+    textAlign: 'center',
+    padding: 20,
   },
 });
 
