@@ -55,6 +55,19 @@ const ProfileScreen: React.FC = () => {
   const shouldFetchPayingChildInfo = loginDetails?.loginType === 'Paying Child';
   const memberId = loginDetails?.id || null;
 
+  //Getting Relation_iD
+
+  const getRelationId = () => {
+  if (shouldFetchMemberInfo && initialMemberInfo && profileData.memberType === 'Member') {
+    // Get relation_id from the relativeData array in member info response
+    const relativeData = initialMemberInfo.message.data.relativeData;
+    if (relativeData && relativeData.length > 0) {
+      return relativeData[0].relation_id; // Use the first relation_id
+    }
+  }
+  return null;
+};
+
   // Hook for initial profile data
   const { memberInfo: initialMemberInfo, loading: memberLoading, error: memberError } = useMemberInfo({
     memberId: shouldFetchMemberInfo ? memberId : null,
@@ -63,16 +76,20 @@ const ProfileScreen: React.FC = () => {
   });
 
   const { relativeInfo, loading: relativeLoading, error: relativeError } = useRelativeInfo({
-    memberId: shouldFetchRelativeInfo || shouldFetchRelativeDetails ? (loginDetails?.id || 998) : null,
-    userToken: userToken,
-    shouldFetch: shouldFetchRelativeInfo || shouldFetchRelativeDetails,
-  });
+  memberId: shouldFetchRelativeInfo || shouldFetchRelativeDetails 
+    ? (profileData.memberType === 'Member' ? getRelationId() : (loginDetails?.id || 998)) 
+    : null,
+  userToken: userToken,
+  shouldFetch: shouldFetchRelativeInfo || shouldFetchRelativeDetails,
+});
 
-  const { payingChildInfo, loading: payingChildLoading, error: payingChildError } = usePayingChildInfo({
-    memberId: shouldFetchPayingChildInfo || shouldFetchSponsorDetails ? memberId : null,
-    userToken: userToken,
-    shouldFetch: shouldFetchPayingChildInfo || shouldFetchSponsorDetails,
-  });
+const { payingChildInfo, loading: payingChildLoading, error: payingChildError } = usePayingChildInfo({
+  memberId: shouldFetchPayingChildInfo || shouldFetchSponsorDetails 
+    ? (profileData.memberType === 'Member' ? getRelationId() : memberId) 
+    : null,
+  userToken: userToken,
+  shouldFetch: shouldFetchPayingChildInfo || shouldFetchSponsorDetails,
+});
 
   // Hook for detailed member information (when Member Info is clicked)
   const { memberInfo: detailedMemberInfo, loading: detailedMemberLoading, error: detailedMemberError } = useMemberInfo({
@@ -89,71 +106,72 @@ const ProfileScreen: React.FC = () => {
   });
 
   useEffect(() => {
-    setIsLoading(
-      (shouldFetchMemberInfo && memberLoading) ||
-      (shouldFetchRelativeInfo && relativeLoading) ||
-      (shouldFetchPayingChildInfo && payingChildLoading)
+  setIsLoading(
+    (shouldFetchMemberInfo && memberLoading) ||
+    (shouldFetchRelativeInfo && relativeLoading) ||
+    (shouldFetchPayingChildInfo && payingChildLoading)
+  );
+
+  setHasError(
+    (shouldFetchMemberInfo && !!memberError) ||
+    (shouldFetchRelativeInfo && !!relativeError) ||
+    (shouldFetchPayingChildInfo && !!payingChildError)
+  );
+
+  if (shouldFetchMemberInfo && initialMemberInfo && loginDetails?.id) {
+    setProfileData({
+      name: initialMemberInfo.message.data.memberName || 'Member',
+      memberId: initialMemberInfo.message.data.memberId || loginDetails.id,
+      memberType: loginDetails.loginType,
+    });
+  }
+
+  if (shouldFetchRelativeInfo && relativeInfo && loginDetails?.id) {
+    const currentMember = relativeInfo.message.data.members.find(
+      (member) => member.memberId === loginDetails.id
     );
+    setProfileData({
+      name: currentMember ? currentMember.memberName : relativeInfo.message.data.name || 'Relative',
+      memberId: loginDetails.id,
+      memberType: loginDetails.loginType,
+    });
+  }
 
-    setHasError(
-      (shouldFetchMemberInfo && !!memberError) ||
-      (shouldFetchRelativeInfo && !!relativeError) ||
-      (shouldFetchPayingChildInfo && !!payingChildError)
+  if (shouldFetchPayingChildInfo && payingChildInfo && loginDetails?.id) {
+    const currentMember = payingChildInfo.message.data.members.find(
+      (member) => member.memberId === loginDetails.id
     );
+    setProfileData({
+      name: currentMember ? currentMember.memberName : payingChildInfo.message.data.name || 'Paying Child',
+      memberId: loginDetails.id,
+      memberType: loginDetails.loginType,
+    });
+  }
 
-    if (shouldFetchMemberInfo && initialMemberInfo && loginDetails?.id) {
-      setProfileData({
-        name: initialMemberInfo.message.data.memberName || 'Member',
-        memberId: initialMemberInfo.message.data.memberId || loginDetails.id,
-        memberType: loginDetails.loginType,
-      });
-    }
-
-    if (shouldFetchRelativeInfo && relativeInfo && loginDetails?.id) {
-      const currentMember = relativeInfo.message.data.members.find(
-        (member) => member.memberId === loginDetails.id
-      );
-      setProfileData({
-        name: currentMember ? currentMember.memberName : relativeInfo.message.data.name || 'Relative',
-        memberId: loginDetails.id,
-        memberType: loginDetails.loginType,
-      });
-    }
-
-    if (shouldFetchPayingChildInfo && payingChildInfo && loginDetails?.id) {
-      const currentMember = payingChildInfo.message.data.members.find(
-        (member) => member.memberId === loginDetails.id
-      );
-      setProfileData({
-        name: currentMember ? currentMember.memberName : payingChildInfo.message.data.name || 'Paying Child',
-        memberId: loginDetails.id,
-        memberType: loginDetails.loginType,
-      });
-    }
-
-    if (!shouldFetchMemberInfo && !shouldFetchRelativeInfo && !shouldFetchPayingChildInfo) {
-      setProfileData({
-        name: loginDetails?.loginType || 'User',
-        memberId: loginDetails?.id || null,
-        memberType: loginDetails?.loginType || 'Unknown',
-      });
-      setIsLoading(false);
-    }
-  }, [
-    initialMemberInfo,
-    relativeInfo,
-    payingChildInfo,
-    loginDetails,
-    shouldFetchMemberInfo,
-    shouldFetchRelativeInfo,
-    shouldFetchPayingChildInfo,
-    memberLoading,
-    relativeLoading,
-    payingChildLoading,
-    memberError,
-    relativeError,
-    payingChildError,
-  ]);
+  if (!shouldFetchMemberInfo && !shouldFetchRelativeInfo && !shouldFetchPayingChildInfo) {
+    setProfileData({
+      name: loginDetails?.loginType || 'User',
+      memberId: loginDetails?.id || null,
+      memberType: loginDetails?.loginType || 'Unknown',
+    });
+    setIsLoading(false);
+  }
+}, [
+  initialMemberInfo,
+  relativeInfo,
+  payingChildInfo,
+  loginDetails,
+  shouldFetchMemberInfo,
+  shouldFetchRelativeInfo,
+  shouldFetchPayingChildInfo,
+  memberLoading,
+  relativeLoading,
+  payingChildLoading,
+  memberError,
+  relativeError,
+  payingChildError,
+  getRelationId(), // Add this to dependencies
+]);
 
   // Log detailed API responses
   useEffect(() => {
