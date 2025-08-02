@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
   placeholderPic: {
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#007C91',
+    backgroundColor: '#065084',
   },
   placeholderText: {
     color: '#fff',
@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
   captainName: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#007C91',
+    color: '#065084',
     marginBottom: 6,
   },
   captainDetail: {

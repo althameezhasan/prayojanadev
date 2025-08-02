@@ -33,12 +33,12 @@ const TasksList: React.FC<TasksListProps> = ({
   }) => {
     // Add comprehensive safety checks for all data
     const safeTask = {
-      task_id: task?.task_id ?? 'N/A',
-      task_name: task?.task_name ?? 'Unnamed Task',
+      task_id: task?.taskId ?? 'N/A',
+      task_name: task?.taskName ?? 'Unnamed Task',
       status: task?.status ?? 'pending',
       notes: task?.notes ?? 'No description available',
-      empName: task?.empName ?? 'Unknown',
-      date: task?.date ?? new Date().toISOString(),
+      empName: task?.householdName ?? 'Unknown',
+      date: task?.updatedAt ?? new Date().toISOString(),
       location: task?.location ?? 'Unknown location',
       time: task?.time ?? 'Unknown time',
     };
@@ -177,8 +177,8 @@ const TasksList: React.FC<TasksListProps> = ({
   // Safe key extractor
   const keyExtractor = (item: Task, index: number) => {
     try {
-      if (item?.task_id) {
-        return String(item.task_id);
+      if (item?.taskId) {
+        return String(item.taskId);
       }
       return `task-${index}`;
     } catch (error) {

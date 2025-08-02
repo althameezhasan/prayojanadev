@@ -6,26 +6,27 @@ export interface TaskAttachment {
 }
 
 export interface Task {
-  task_id: number;
-  updated_at: string;
+  taskId: number;                    // was task_id
+  updatedAt: string;                 // was updated_at
   duration: string;
-  pr_id: string;
-  assigned: number;
-  creator_id: string;
-  task_name: string;
-  createdBy: string;
-  empName: string;
-  creator_pic: string;
-  assignee_pic: string;
-  household_name: string;
+  prId: string;                      // was pr_id
+  assignedTo: number;                // was assigned
+  creatorId: string;                 // was creator_id
+  taskName: string;                  // was task_name
+  creatorPic: string;                // was creator_pic
+  assigneePic: string;               // was assignee_pic
+  householdName: string;             // was household_name
   location: string;
-  mobile_num: string;
+  mobileNumber: string;              // was mobile_num
   time: string | null;
-  date: string;
+  validTill: string;                 // was date
   status: string;
-  task_status_id: number;
+  taskStatusId: number;              // was task_status_id
   attachments: TaskAttachment[];
   notes: string;
+  
+  // Removed fields that don't exist in API response:
+  // createdBy, empName
 }
 
 export interface TaskResponse {

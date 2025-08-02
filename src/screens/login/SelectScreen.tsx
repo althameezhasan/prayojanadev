@@ -73,7 +73,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   getStartedButton: {
-    backgroundColor: '#007C91',
+    backgroundColor: '#065084',
     paddingVertical: 20,
     paddingHorizontal: 40,
     borderRadius: 10,
