@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
+
 import {
   View,
   Text,
@@ -1027,84 +1029,85 @@ const { payingChildInfo, loading: payingChildLoading, error: payingChildError } 
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.topRightCircle} />
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton}>
-          <Text style={styles.backArrow}>←</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerText}>Profile</Text>
-      </View>
+      
       <ScrollView style={styles.content}>
-        <View style={styles.profileCard}>
-          {isLoading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#007C91" />
-              <Text style={styles.loadingText}>Loading profile...</Text>
-            </View>
-          ) : hasError ? (
-            <Text style={styles.errorText}>Failed to load profile details</Text>
-          ) : (
-            <>
-              <View style={styles.avatarContainer}>
-                <Text style={styles.avatarText}>{avatarLetter}</Text>
+
+      <View style={styles.topSection}>
+          <View style={styles.header}>
+            <View style={styles.figmaCurveBackground} />
+
+            <TouchableOpacity style={styles.backButton}>
+              <FontAwesome name="arrow-left" size={24} color="white" />
+            </TouchableOpacity>
+
+            <Text style={styles.headerText}>Profile</Text>
+          </View>
+
+          <View style={styles.profileCard}>
+            {isLoading ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#007C91" />
+                <Text style={styles.loadingText}>Loading profile...</Text>
               </View>
-              <View style={styles.profileInfo}>
-                <Text style={styles.profileName}>{profileData.name}</Text>
-                <Text style={styles.profilePhone}>Member ID: {profileData.memberId || 'N/A'}</Text>
-                <Text style={styles.profileAge}>Member Type: {profileData.memberType}</Text>
-              </View>
-            </>
-          )}
-        </View>
+            ) : hasError ? (
+              <Text style={styles.errorText}>Failed to load profile details</Text>
+            ) : (
+              <>
+                <View style={styles.avatarContainer}>
+                  <Text style={styles.avatarText}>{avatarLetter}</Text>
+                </View>
+                <View style={styles.profileInfo}>
+                  <Text style={styles.profileName}>{profileData.name}</Text>
+                  <Text style={styles.profilePhone}>Member ID: {profileData.memberId || 'N/A'}</Text>
+                  <Text style={styles.profileAge}>Member Type: {profileData.memberType}</Text>
+                </View>
+              </>
+            )}
+          </View>
+      </View>
+
         <View style={styles.menu}>
-          <TouchableOpacity 
-            style={styles.menuItem}
-            onPress={handleMemberInfoPress}
-          >
-            <Text style={styles.menuText}>Member Information</Text>
-            <Text style={styles.menuArrow}>›</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.menuItem}
-            onPress={handlePersonalDetailsPress}
-          >
+          <TouchableOpacity style={styles.menuItem} onPress={handlePersonalDetailsPress}>
+            <View style={styles.menuIconCircle}>
+              <FontAwesome name="user" size={20} color="#fff" />
+            </View>
             <Text style={styles.menuText}>Personal Details</Text>
             <Text style={styles.menuArrow}>›</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.menuItem}
-            onPress={handleSponsorDetailsPress}
-          >
+
+          <TouchableOpacity style={styles.menuItem} onPress={handleSponsorDetailsPress}>
+            <View style={styles.menuIconCircle}>
+              <FontAwesome name="user" size={20} color="#fff" />
+            </View>
             <Text style={styles.menuText}>Sponsor Details</Text>
             <Text style={styles.menuArrow}>›</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.menuItem}
-            onPress={handleTeamInfoPress}
-          >
+
+          <TouchableOpacity style={styles.menuItem} onPress={handleTeamInfoPress}>
+            <View style={styles.menuIconCircle}>
+              <FontAwesome name="group" size={20} color="#fff" />
+            </View>
             <Text style={styles.menuText}>Team Information</Text>
             <Text style={styles.menuArrow}>›</Text>
           </TouchableOpacity>
-          {profileData.memberType !== 'Relative' && (
-            <TouchableOpacity 
-              style={styles.menuItem}
-              onPress={handleRelativeInfoPress}
-            >
-              <Text style={styles.menuText}>Relative Information</Text>
-              <Text style={styles.menuArrow}>›</Text>
-            </TouchableOpacity>
-          )}
-          {showRelativesTab && (
-            <TouchableOpacity style={styles.menuItem}>
-              <Text style={styles.menuText}>Relatives</Text>
-              <Text style={styles.menuArrow}>›</Text>
-            </TouchableOpacity>
-          )}
+
+          <TouchableOpacity style={styles.menuItem} onPress={handleRelativeInfoPress}>
+            <View style={styles.menuIconCircle}>
+              <FontAwesome name="user-o" size={20} color="#fff" />
+            </View>
+            <Text style={styles.menuText}>Relative Information</Text>
+            <Text style={styles.menuArrow}>›</Text>
+          </TouchableOpacity>
+
           <TouchableOpacity style={styles.menuItem}>
+            <View style={styles.menuIconCircle}>
+              <FontAwesome name="heartbeat" size={20} color="#fff" />
+            </View>
             <Text style={styles.menuText}>Health Information</Text>
             <Text style={styles.menuArrow}>›</Text>
           </TouchableOpacity>
         </View>
+
       </ScrollView>
       <View style={styles.buttonContainer}>
         <TouchableOpacity
@@ -1132,46 +1135,70 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     paddingTop: 20,
   },
-  topRightCircle: {
+
+  topSection: {
+    backgroundColor: '#ffffff',
+    position: 'relative',
+    paddingBottom: 20,
+  },
+
+  // 🔷 Curved blue background (left side)
+  figmaCurveBackground: {
     position: 'absolute',
-    top: -60,
-    right: -60,
-    width: 180,
-    height: 180,
-    borderRadius: 90,
+    top: 0,
+    left: 0,
+    width: 200,
+    height: 300,
     backgroundColor: '#007C91',
+    borderBottomRightRadius: 300,
     zIndex: -1,
   },
+
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
+    paddingTop: 50,
+    borderBottomWidth: 0,
+    zIndex: 2,
   },
+  
   backButton: {
     padding: 5,
+    fontSize: 55,
+    color: '#ffffff',
+    fontWeight:'200'
   },
+  
   backArrow: {
-    fontSize: 18,
-    color: '#007C91',
+    fontSize: 55,
+    color: '#ffffff',
   },
   headerText: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
     marginLeft: 10,
-    color: '#1a1a1a',
+    color: '#ffffff',
+    textAlign: 'center',
   },
-  content: {
-    flex: 1,
-  },
+
   profileCard: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
+    paddingTop: 25,
+    marginHorizontal: 10,
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 3,
+    zIndex: 2,
+    marginTop: -10,
   },
+
   avatarContainer: {
     width: 80,
     height: 80,
@@ -1204,6 +1231,60 @@ const styles = StyleSheet.create({
     color: '#666',
     marginTop: 5,
   },
+
+  content: {
+    flex: 1,
+  },
+
+  // 🔻 Menu section styles
+  menu: {
+    flexGrow: 1,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  menuIconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#007C91',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  menuText: {
+    flex: 1,
+    fontSize: 18,
+    color: 'black',
+    fontWeight: '700',
+  },
+  menuArrow: {
+    fontSize: 30,
+    color: 'black',
+  },
+
+  // 🔻 Loading and error states
+  loadingContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 15,
+  },
+  loadingText: {
+    fontSize: 14,
+    color: '#666',
+    marginLeft: 10,
+  },
+  errorText: {
+    fontSize: 14,
+    color: '#dc3545',
+    padding: 15,
+  },
+
+  // 🔻 Logout button section
   buttonContainer: {
     width: '100%',
     alignItems: 'center',
@@ -1232,40 +1313,8 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textAlign: 'center',
   },
-  menu: {
-    flexGrow: 1,
-  },
-  menuItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
-  },
-  menuText: {
-    fontSize: 16,
-    color: '#1a1a1a',
-  },
-  menuArrow: {
-    fontSize: 18,
-    color: '#007C91',
-  },
-  loadingContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 15,
-  },
-  loadingText: {
-    fontSize: 14,
-    color: '#666',
-    marginLeft: 10,
-  },
-  errorText: {
-    fontSize: 14,
-    color: '#dc3545',
-    padding: 15,
-  },
+
+  // 🔻 Modal styles
   modalContainer: {
     flex: 1,
     backgroundColor: '#ffffff',
@@ -1298,6 +1347,8 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 15,
   },
+
+  // 🔻 Info cards & member details
   infoCard: {
     backgroundColor: '#f8f9fa',
     borderRadius: 12,
@@ -1351,6 +1402,7 @@ const styles = StyleSheet.create({
     color: '#666',
     marginBottom: 4,
   },
+
   sectionContainer: {
     marginBottom: 20,
   },
@@ -1360,6 +1412,7 @@ const styles = StyleSheet.create({
     color: '#007C91',
     marginBottom: 10,
   },
+
   personalDetailRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -1381,5 +1434,6 @@ const styles = StyleSheet.create({
     textAlign: 'right',
   },
 });
+
 
 export default ProfileScreen;
