@@ -28,20 +28,20 @@ const NewTaskCard: React.FC<NewTaskCardProps> = ({ task, onTaskPress }) => {
             source={{ uri: 'https://via.placeholder.com/50' }} // Replace with actual image URL or local asset
             style={styles.avatar}
           />
-          <Text style={styles.taskId}>ID: {task.task_id}</Text>
+          <Text style={styles.taskId}>ID: {task.taskId}</Text>
           <Text style={styles.status}>Pending</Text>
         </View>
-        <Text style={styles.taskTitle}>{task.task_name}</Text>
+        <Text style={styles.taskTitle}>{task.taskName}</Text>
         <Text style={styles.description}>
           {task.notes || 'No description available'}
         </Text>
         <View style={styles.details}>
           <Text style={styles.detailText}>Care buddy</Text>
-          <Text style={styles.detailText}>{task.empName}</Text>
+          <Text style={styles.detailText}>{task.householdName}</Text>
         </View>
         <View style={styles.dateContainer}>
           <Text style={styles.dateText}>Date</Text>
-          <Text style={styles.dateText}>{formatDate(task.date)}</Text>
+          <Text style={styles.dateText}>{formatDate(task.updatedAt)}</Text>
         </View>
       </View>
     </TouchableOpacity>

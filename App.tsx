@@ -46,7 +46,7 @@ const AppContent: React.FC = () => {
   if (isAuthLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#007C91" />
+        <ActivityIndicator size="large" color="#065084" />
       </View>
     );
   }

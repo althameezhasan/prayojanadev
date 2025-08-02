@@ -46,6 +46,7 @@ const HomeScreenHeader: React.FC<HomeScreenHeaderWithDataProps> = ({
   const [memberName, setMemberName] = useState<string>('');
   const [householdId, setHouseholdId] = useState<number | null>(null);
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [profilePhotoUrl, setProfilePhotoUrl] = useState<string | null>(null);
 
   const shouldFetchMemberInfo = loginDetails?.loginType === 'Member';
   const shouldFetchRelativeInfo = loginDetails?.loginType === 'Relative';
@@ -101,6 +102,10 @@ const HomeScreenHeader: React.FC<HomeScreenHeaderWithDataProps> = ({
       
       setHouseholdId(extractedHouseholdId || null);
 
+      // ✅ Set member profile photo from memberPic field
+      setProfilePhotoUrl(data.memberPic || null);
+      console.log('📸 Member Profile Photo URL:', data.memberPic);
+
       // Check if this is the new API structure with direct member data
       if (data.memberName && data.memberId === loginDetails.id) {
         console.log('✅ Using new API structure - direct member data');
@@ -116,6 +121,11 @@ const HomeScreenHeader: React.FC<HomeScreenHeaderWithDataProps> = ({
         if (currentMember) {
           console.log('✅ Found matching member in memberArr:', currentMember);
           setMemberName(currentMember.memberName);
+          // ✅ Also set memberPic from legacy structure if needed
+          if (!data.memberPic && currentMember.memberPic) {
+            setProfilePhotoUrl(currentMember.memberPic);
+            console.log('📸 Member Profile Photo URL (from memberArr):', currentMember.memberPic);
+          }
         } else {
           console.log('❌ No matching member found in memberArr');
           setMemberName('Member');
@@ -180,6 +190,10 @@ const HomeScreenHeader: React.FC<HomeScreenHeaderWithDataProps> = ({
       console.log('📋 Processing Relative API response...');
       
       setHouseholdId(relativeInfo.message.data.household_id);
+      
+      // Set profile photo for relative
+      setProfilePhotoUrl(relativeInfo.message.data.profile_photo_url || null);
+      console.log('📸 Relative Profile Photo URL:', relativeInfo.message.data.profile_photo_url);
 
       const currentMember = relativeInfo.message.data.members.find(
         (member) => member.memberId === loginDetails.id,
@@ -225,6 +239,10 @@ const HomeScreenHeader: React.FC<HomeScreenHeaderWithDataProps> = ({
       console.log('📋 Processing Paying Child API response...');
       
       setHouseholdId(payingChildInfo.message.data.household_id);
+      
+      // Set profile photo for paying child
+      setProfilePhotoUrl(payingChildInfo.message.data.profile_photo_url || null);
+      console.log('📸 Paying Child Profile Photo URL:', payingChildInfo.message.data.profile_photo_url);
 
       const currentMember = payingChildInfo.message.data.members.find(
         (member) => member.memberId === loginDetails.id,
@@ -270,6 +288,7 @@ const HomeScreenHeader: React.FC<HomeScreenHeaderWithDataProps> = ({
       setMemberName(loginDetails?.loginType || 'User');
       setHouseholdId(null);
       setTeamMembers([]);
+      setProfilePhotoUrl(null);
     }
   }, [
     memberInfo,
@@ -313,6 +332,36 @@ const HomeScreenHeader: React.FC<HomeScreenHeaderWithDataProps> = ({
     return name ? name.charAt(0).toUpperCase() : 'U';
   };
 
+  const renderAvatar = () => {
+    // ✅ Show profile photo for ALL user types when available
+    if (profilePhotoUrl) {
+      return (
+        <View style={styles.avatarContainer}>
+          <Image
+            source={{ uri: profilePhotoUrl }}
+            style={styles.profilePhoto}
+            defaultSource={require('../../../assets/image/avatar.png')} // Add a default image
+            onError={() => {
+              console.log('❌ Failed to load profile photo, falling back to letter avatar');
+              setProfilePhotoUrl(null); // Fall back to letter avatar on error
+            }}
+          />
+        </View>
+      );
+    }
+
+    // Default letter avatar when no profile photo is available
+    return (
+      <View style={styles.avatarContainer}>
+        <View style={styles.avatarCircle}>
+          <Text style={styles.avatarText}>
+            {getFirstLetter(memberName)}
+          </Text>
+        </View>
+      </View>
+    );
+  };
+
   return (
     <View style={styles.headerContainer}>
       <ImageBackground
@@ -323,13 +372,7 @@ const HomeScreenHeader: React.FC<HomeScreenHeaderWithDataProps> = ({
         <View style={styles.headerOverlay}>
           <View style={styles.headerContent}>
             <View style={styles.headerRow}>
-              <View style={styles.avatarContainer}>
-                <View style={styles.avatarCircle}>
-                  <Text style={styles.avatarText}>
-                    {getFirstLetter(memberName)}
-                  </Text>
-                </View>
-              </View>
+              {renderAvatar()}
 
               <View style={styles.welcomeSection}>
                 <Text style={styles.welcomeText}>Welcome,</Text>
@@ -366,68 +409,64 @@ const HomeScreenHeader: React.FC<HomeScreenHeaderWithDataProps> = ({
               </TouchableOpacity>
             </View>
 
-            {householdId && tasks && tasks.length > 0 && (
-              <View style={styles.tasksInHeader}>
-                <View style={styles.taskHeader}>
-                  <Text style={styles.taskHeaderTitle}>Upcoming task</Text>
-                  <TouchableOpacity
-                    style={styles.seeAllButton}
-                    onPress={handleSeeAllPress}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={styles.seeAllText}>see all</Text>
-                  </TouchableOpacity>
-                </View>
-                <View style={styles.headerTaskCard}>
-                  <View style={styles.headerTaskTop}>
-                    <Text style={styles.headerTaskTitle} numberOfLines={1}>
-                      {tasks[0].task_name}
-                    </Text>
-                    <TouchableOpacity
-                      onPress={handleEditPress}
-                      activeOpacity={0.7}
-                    >
-                      <Image
-                        source={require('../../../assets/image/edit.png')}
-                        style={styles.headerTaskEditIcon}
-                      />
-                    </TouchableOpacity>
-                  </View>
-                  <View style={styles.headerTaskBottom}>
-                    <View style={styles.headerTaskInfo}>
-                      <Image
-                        source={require('../../../assets/image/icons/user.png')}
-                        style={styles.headerTaskIconImage}
-                      />
-                      <Text style={styles.headerTaskText}>{tasks[0].empName}</Text>
-                    </View>
-                    <View style={styles.headerTaskDivider} />
-                    <View style={styles.headerTaskTimeDate}>
-                      <View style={styles.headerTaskInfo}>
-                        <Image
-                          source={require('../../../assets/image/icons/time.png')}
-                          style={styles.headerTaskIconImage}
-                        />
-                        <Text style={styles.headerTaskText}>{tasks[0].time}</Text>
-                      </View>
-                      <View style={styles.headerTaskInfo}>
-                        <Image
-                          source={require('../../../assets/image/icons/time.png')}
-                          style={styles.headerTaskIconImage}
-                        />
-                        <Text style={styles.headerTaskText}>
-                          {new Date(tasks[0].date).toLocaleDateString('en-GB', {
-                            day: '2-digit',
-                            month: 'short',
-                            year: 'numeric',
-                          })}
-                        </Text>
-                      </View>
-                    </View>
-                  </View>
-                </View>
-              </View>
-            )}
+           {householdId && tasks && tasks.length > 0 && (
+  <View style={styles.tasksInHeader}>
+    <View style={styles.taskHeader}>
+      <Text style={styles.taskHeaderTitle}>Upcoming task</Text>
+      <TouchableOpacity
+        style={styles.seeAllButton}
+        onPress={handleSeeAllPress}
+        activeOpacity={0.7}
+      >
+        <Text style={styles.seeAllText}>see all</Text>
+      </TouchableOpacity>
+    </View>
+    <View style={styles.headerTaskCard}>
+      <View style={styles.headerTaskTop}>
+        <Text style={styles.headerTaskTitle} numberOfLines={1}>
+          {tasks[0].taskName}
+        </Text>
+        <TouchableOpacity
+          onPress={handleEditPress}
+          activeOpacity={0.7}
+        >
+          <Image
+            source={require('../../../assets/image/edit.png')}
+            style={styles.headerTaskEditIcon}
+          />
+        </TouchableOpacity>
+      </View>
+      <View style={styles.headerTaskBottom}>
+        <View style={styles.headerTaskInfo}>
+          <Image
+            source={require('../../../assets/image/User2.png')}
+            style={styles.headerTaskIconImage}
+          />
+          <Text style={styles.headerTaskText}>{tasks[0].householdName}</Text>
+        </View>
+        <View style={styles.headerTaskDivider} />
+        <View style={styles.headerTaskTimeDate}>
+          <View style={styles.headerTaskInfo}>
+            <Image
+              source={require('../../../assets/image/icons/time.png')}
+              style={styles.headerTaskIconImage}
+            />
+            <View style={styles.textContainer}>
+              <Text style={styles.headerTaskText}>{tasks[0].time}</Text>
+              <Text style={styles.headerTaskText}>
+                {new Date(tasks[0].validTill).toLocaleDateString('en-GB', {
+                  day: '2-digit',
+                  month: 'short',
+                  year: 'numeric',
+                })}
+              </Text>
+            </View>
+          </View>
+        </View>
+      </View>
+    </View>
+  </View>
+)}
           </View>
         </View>
       </ImageBackground>
@@ -439,7 +478,7 @@ const HomeScreenHeader: React.FC<HomeScreenHeaderWithDataProps> = ({
 const styles = StyleSheet.create({
   headerContainer: {
     position: 'relative',
-    height: 340,
+    height: 360,
   },
   headerBackground: {
     flex: 1,
@@ -471,10 +510,8 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 30,
-    backgroundColor: '#007C91',
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
-    opacity: 0.1,
   },
   avatarContainer: {
     alignItems: 'center',
@@ -490,6 +527,13 @@ const styles = StyleSheet.create({
     borderColor: '#ffffff',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  profilePhoto: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    borderWidth: 2,
+    borderColor: '#ffffff',
   },
   avatarText: {
     fontSize: 22,
@@ -576,67 +620,66 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   headerTaskCard: {
-    marginHorizontal: 0,
-    marginVertical: 0,
+    backgroundColor: '#E6E6E6',
+    borderRadius: 12,
+    overflow: 'hidden',
+    padding: 5,
+    paddingBottom: 15,
   },
   headerTaskTop: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 15,
-    borderTopRightRadius: 15,
-    padding: 12,
     flexDirection: 'row',
+    backgroundColor: '#fff',
+    padding: 16,
+    borderRadius: 10,
     justifyContent: 'space-between',
     alignItems: 'center',
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
   },
   headerTaskTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1a1a1a',
+    color: '#000',
     flex: 1,
-    marginRight: 8, // Add margin to prevent overlap with edit icon
+    marginRight: 8,
   },
   headerTaskEditIcon: {
-    width: 20,
-    height: 20,
+    width: 32,
+    height: 32,
     resizeMode: 'contain',
   },
   headerTaskBottom: {
-    backgroundColor: '#eee',
-    borderBottomLeftRadius: 15,
-    borderBottomRightRadius: 15,
-    padding: 12,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    backgroundColor: '#e6e6e6',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomLeftRadius: 12,
+    borderBottomRightRadius: 12,
   },
   headerTaskInfo: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
+    alignItems: 'flex-start',
   },
   headerTaskIconImage: {
-    width: 14,
-    height: 14,
-    marginRight: 4,
+    width: 32,
+    height: 32,
+    marginRight: 8,
     resizeMode: 'contain',
   },
-  headerTaskText: {
-    fontSize: 13,
-    color: '#1a1a1a',
-  },
-  headerTaskTimeDate: {
+  textContainer: {
     flexDirection: 'column',
-    alignItems: 'flex-start',
+  },
+  headerTaskText: {
+    fontSize: 14,
+    color: '#333',
   },
   headerTaskDivider: {
     width: 1,
-    height: 40, // Adjusted to match the height of the time/date stack
     backgroundColor: '#ccc',
-    marginHorizontal: 8,
+    marginHorizontal: 12,
+  },
+  headerTaskTimeDate: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
   },
 });
 

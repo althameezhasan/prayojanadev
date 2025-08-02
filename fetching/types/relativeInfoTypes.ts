@@ -14,6 +14,7 @@ export interface RelativeInfoResponse {
       type: string;
       email: string | null;
       is_sponser: boolean;
+      profile_photo_url: string; // Added this field
       household: Array<{
         household_id: number;
         houseHoldName: string;

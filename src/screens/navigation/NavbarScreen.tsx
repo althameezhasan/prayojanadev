@@ -138,7 +138,7 @@ const styles = StyleSheet.create({
     tintColor: '#888',
   },
   navIconImageActive: {
-    tintColor: '#007C91',
+    tintColor: '#065084',
   },
   navIconImageDisabled: {
     tintColor: '#ccc',
@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   navLabelActive: {
-    color: '#007C91',
+    color: '#065084',
     fontWeight: '600',
   },
   navLabelDisabled: {

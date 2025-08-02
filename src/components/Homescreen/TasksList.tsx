@@ -50,7 +50,7 @@ const TasksList: React.FC<TasksListProps> = ({
   if (loading && !tasks) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#007C91" />
+        <ActivityIndicator size="large" color="#065084" />
         <Text style={styles.loadingText}>Loading tasks...</Text>
       </View>
     );
@@ -74,14 +74,14 @@ const TasksList: React.FC<TasksListProps> = ({
       <FlatList
         data={tasks || []}
         renderItem={renderTaskCard}
-        keyExtractor={(item) => item.task_id.toString()}
+        keyExtractor={(item) => item.taskId.toString()}
         showsVerticalScrollIndicator={false}
         refreshControl={
           onRefresh ? (
             <RefreshControl
               refreshing={loading}
               onRefresh={onRefresh}
-              colors={['#007C91']}
+              colors={['#065084']}
             />
           ) : undefined
         }

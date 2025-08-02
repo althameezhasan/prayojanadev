@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
   },
   teamMemberRole: {
     fontSize: 12,
-    color: '#007C91',
+    color: '#065084',
     textAlign: 'center',
     fontWeight: '500',
     marginBottom: 4,

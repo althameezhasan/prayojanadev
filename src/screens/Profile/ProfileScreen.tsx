@@ -564,7 +564,7 @@ const { payingChildInfo, loading: payingChildLoading, error: payingChildError } 
         <ScrollView style={styles.modalContent}>
           {detailedMemberLoading ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#007C91" />
+              <ActivityIndicator size="large" color="#065084" />
               <Text style={styles.loadingText}>Loading member information...</Text>
             </View>
           ) : detailedMemberError ? (
@@ -620,7 +620,7 @@ const { payingChildInfo, loading: payingChildLoading, error: payingChildError } 
         <ScrollView style={styles.modalContent}>
           {teamMemberLoading ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#007C91" />
+              <ActivityIndicator size="large" color="#065084" />
               <Text style={styles.loadingText}>Loading team information...</Text>
             </View>
           ) : teamMemberError ? (
@@ -705,7 +705,7 @@ const { payingChildInfo, loading: payingChildLoading, error: payingChildError } 
         <ScrollView style={styles.modalContent}>
           {relativeLoading ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#007C91" />
+              <ActivityIndicator size="large" color="#065084" />
               <Text style={styles.loadingText}>Loading relative information...</Text>
             </View>
           ) : relativeError ? (
@@ -840,7 +840,7 @@ const { payingChildInfo, loading: payingChildLoading, error: payingChildError } 
         <ScrollView style={styles.modalContent}>
           {payingChildLoading ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#007C91" />
+              <ActivityIndicator size="large" color="#065084" />
               <Text style={styles.loadingText}>Loading sponsor information...</Text>
             </View>
           ) : payingChildError ? (
@@ -1038,7 +1038,7 @@ const { payingChildInfo, loading: payingChildLoading, error: payingChildError } 
         <View style={styles.profileCard}>
           {isLoading ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#007C91" />
+              <ActivityIndicator size="large" color="#065084" />
               <Text style={styles.loadingText}>Loading profile...</Text>
             </View>
           ) : hasError ? (
@@ -1139,7 +1139,7 @@ const styles = StyleSheet.create({
     width: 180,
     height: 180,
     borderRadius: 90,
-    backgroundColor: '#007C91',
+    backgroundColor: '#065084',
     zIndex: -1,
   },
   header: {
@@ -1154,7 +1154,7 @@ const styles = StyleSheet.create({
   },
   backArrow: {
     fontSize: 18,
-    color: '#007C91',
+    color: '#065084',
   },
   headerText: {
     fontSize: 18,
@@ -1176,7 +1176,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#007C91',
+    backgroundColor: '#065084',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 15,
@@ -1248,7 +1248,7 @@ const styles = StyleSheet.create({
   },
   menuArrow: {
     fontSize: 18,
-    color: '#007C91',
+    color: '#065084',
   },
   loadingContainer: {
     flex: 1,
@@ -1290,7 +1290,7 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   closeButtonText: {
-    color: '#007C91',
+    color: '#065084',
     fontSize: 16,
     fontWeight: '600',
   },
@@ -1328,7 +1328,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#007C91',
+    backgroundColor: '#065084',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -1357,7 +1357,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#007C91',
+    color: '#065084',
     marginBottom: 10,
   },
   personalDetailRow: {

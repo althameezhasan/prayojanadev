@@ -58,7 +58,7 @@ const styles = StyleSheet.create({
   planName: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#007C91',
+    color: '#065084',
     marginBottom: 4,
   },
   planDetail: {

@@ -75,7 +75,7 @@ export interface MemberInfoResponse {
       gender: string;
       bloodGroup: string;
       dob: string;
-      memberPic: string;
+      memberPic: string; // ✅ Added this field that was missing
       reference_status_name: string;
       reference_status_id: string;
       reference_status_type: string;

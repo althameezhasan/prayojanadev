@@ -12,6 +12,8 @@ import {
 import { useLoginDetails, useAuth } from '../../context/AuthContext';
 import HomeScreenHeader, { TeamMember, HeaderData } from '../../components/Homescreen/HomeScreenHeader';
 import TeamProfileSection from '../../components/Homescreen/TeamProfileSection';
+import Carousel from '../../components/Homescreen/Carousel';
+
 
 interface HomeScreenProps {
   onNavigateToDashboard: () => void;
@@ -53,17 +55,9 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToDashboard }) => {
           onDataLoaded={handleHeaderDataLoaded}
         />
 
-        <View style={styles.content}>
-          <ImageBackground
-            source={require('../../../assets/image/carousel.png')}
-            style={styles.reminderCard}
-            imageStyle={{ borderRadius: 12 }}
-          >
-            <Text style={styles.reminderText}>
-              Don't forget to take your medicines on time.
-            </Text>
-          </ImageBackground>
+        <Carousel />
 
+        <View style={styles.content}>
           <View style={styles.eventSection}>
             <View style={styles.eventHeader}>
               <Text style={styles.eventTitle}>Upcoming event</Text>
@@ -85,14 +79,10 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToDashboard }) => {
                       source={require('../../../assets/image/icons/time.png')}
                       style={styles.iconImage}
                     />
-                    <Text style={styles.iconText}>08:00 a.m</Text>
-                  </View>
-                  <View style={styles.iconRow}>
-                    <Image
-                      source={require('../../../assets/image/icons/time.png')}
-                      style={styles.iconImage}
-                    />
-                    <Text style={styles.iconText}>20, Aug, 2025</Text>
+                    <View style={styles.textContainer}>
+                      <Text style={styles.iconText}>08:00 a.m</Text>
+                      <Text style={styles.iconText}>20 Aug 2025</Text>
+                    </View>
                   </View>
                 </View>
               </View>
@@ -160,25 +150,6 @@ const styles = StyleSheet.create({
     padding: 24,
     marginTop: -20,
   },
-  reminderCard: {
-    marginTop: 24,
-    width: '100%',
-    height: 120,
-    borderRadius: 12,
-    overflow: 'hidden',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 24,
-    paddingTop: 12,
-    backgroundColor: '#e0f7fa',
-  },
-  reminderText: {
-    color: '#000',
-    fontSize: 18,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    paddingHorizontal: 20,
-  },
   eventSection: {
     marginBottom: 24,
   },
@@ -197,15 +168,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#007bff',
   },
-
-  // Updated Event Card with margin shrink
   eventCardContainer: {
     backgroundColor: '#e0e0e0',
     borderRadius: 12,
     overflow: 'hidden',
     marginTop: 12,
     padding: 5,
-    paddingBottom:15
+    paddingBottom: 15,
   },
   eventCardTop: {
     flexDirection: 'row',
@@ -233,14 +202,17 @@ const styles = StyleSheet.create({
   },
   iconRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: 6,
   },
   iconImage: {
-    width: 18,
-    height: 18,
-    marginRight: 6,
+    width: 32, // Increased icon size
+    height: 32, // Increased icon size
+    marginRight: 8,
     resizeMode: 'contain',
+  },
+  textContainer: {
+    flexDirection: 'column',
   },
   iconText: {
     fontSize: 14,

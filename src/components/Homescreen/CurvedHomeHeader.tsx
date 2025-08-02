@@ -24,7 +24,7 @@
 // }) => {
 //   return (
 //     <View style={styles.container}>
-//       <StatusBar backgroundColor="#007C91" barStyle="light-content" />
+//       <StatusBar backgroundColor="#065084" barStyle="light-content" />
       
 //       {/* Background Header with Curve - Beautiful Gradient */}
 //       <View style={styles.topBanner}>
@@ -105,7 +105,7 @@
 //     overflow: 'hidden',
 //     position: 'relative',
 //     // Beautiful gradient background
-//     backgroundColor: '#007C91',
+//     backgroundColor: '#065084',
 //     shadowColor: '#000',
 //     shadowOffset: {
 //       width: 0,

@@ -10,12 +10,12 @@ interface TaskCardProps {
 const TaskCard: React.FC<TaskCardProps> = ({ task, onTaskPress }) => {
   // Add safety checks for all data
   const safeTask = {
-    task_id: task?.task_id ?? 'N/A',
-    task_name: task?.task_name ?? 'Unnamed Task',
+    task_id: task?.taskId ?? 'N/A',
+    task_name: task?.taskName ?? 'Unnamed Task',
     status: task?.status ?? 'pending',
     notes: task?.notes ?? 'No description available',
-    empName: task?.empName ?? 'Unknown',
-    date: task?.date ?? new Date().toISOString(),
+    empName: task?.householdName ?? 'Unknown',
+    date: task?.updatedAt ?? new Date().toISOString(),
   };
 
   const formatDate = (dateString: string) => {
