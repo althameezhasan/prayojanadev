@@ -12,9 +12,8 @@ import {
 
 interface SelectScreenProps {
   onGetStarted: () => void;
-  onAuthenticatorLogin: () => void;  // ✅ Use type signature, not assignment
+  onAuthenticatorLogin: () => void; // This now leads to AuthenticatorOptionScreen
 }
-
 
 const SelectScreen: React.FC<SelectScreenProps> = ({ onGetStarted, onAuthenticatorLogin }) => {
   return (
@@ -26,9 +25,7 @@ const SelectScreen: React.FC<SelectScreenProps> = ({ onGetStarted, onAuthenticat
         style={styles.backgroundImage}
         resizeMode="contain"
       >
-        {/* Content */}
         <View style={styles.content}>
-          {/* Bottom white card */}
           <View style={styles.bottomCard}>
             <Text style={styles.cardText}>Please select how you'd like to log in:</Text>
             
@@ -76,7 +73,7 @@ const styles = StyleSheet.create({
   cardText: {
     fontSize: 16,
     color: '#333',
-    marginBottom: 40, // Reduced from 70 to accommodate two buttons
+    marginBottom: 40,
     textAlign: 'center',
   },
   loginButton: {
@@ -84,7 +81,7 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
     paddingHorizontal: 40,
     borderRadius: 10,
-    marginBottom: 20, // Add spacing between buttons
+    marginBottom: 20,
     width: '100%',
     alignItems: 'center',
     shadowColor: '#000',
