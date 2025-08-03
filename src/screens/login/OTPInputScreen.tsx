@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import useHTTP from '../../hooks/http';
+import { AUTH_URL } from '../../constants';
 
 // Define the expected response type based on your actual API response
 interface VerifyOTPResponse {
@@ -93,7 +94,7 @@ const OTPInputScreen: React.FC<OTPInputScreenProps> = ({
       clearError();
       
       handleVerifyOTP({
-        url: 'https://kwnfmv39-443.inc1.devtunnels.ms/api/auth/membersverify',
+        url: AUTH_URL+'membersverify',
         method: 'POST',
         data: {
           phone: `+91${mobileNumber}`,
@@ -356,7 +357,7 @@ const styles = StyleSheet.create({
   },
   changeNumberText: {
     fontSize: 14,
-    color: '#007C91',
+    color: '#065084',
     fontWeight: '600',
     textDecorationLine: 'underline',
   },
@@ -383,7 +384,7 @@ const styles = StyleSheet.create({
   },
   otpInputFilled: {
     backgroundColor: '#e8f5ff',
-    borderColor: '#007C91',
+    borderColor: '#065084',
   },
   errorText: {
     color: '#ff3b30',
@@ -392,7 +393,7 @@ const styles = StyleSheet.create({
   },
   verifyButton: {
     marginTop: 30,
-    backgroundColor: '#007C91',
+    backgroundColor: '#065084',
     marginHorizontal: 24,
     borderRadius: 12,
     height: 56,
@@ -423,7 +424,7 @@ const styles = StyleSheet.create({
   },
   resendLink: {
     fontSize: 14,
-    color: '#007C91',
+    color: '#065084',
     fontWeight: '600',
   },
 });

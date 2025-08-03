@@ -2,47 +2,46 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Task } from '../../../fetching/types/taskTypes';
 
-interface TaskCardProps {
+interface NewTaskCardProps {
   task: Task;
   onTaskPress?: (task: Task) => void;
 }
 
-const TaskCard: React.FC<TaskCardProps> = ({ task, onTaskPress }) => {
+const NewTaskCard: React.FC<NewTaskCardProps> = ({ task, onTaskPress }) => {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-GB', {
       day: '2-digit',
       month: 'short',
       year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
     });
   };
 
   return (
     <TouchableOpacity onPress={() => onTaskPress?.(task)} activeOpacity={0.8}>
       <View style={styles.cardContainer}>
-        {/* Top white pill */}
-        <View style={styles.topBox}>
-          <Text style={styles.taskTitle} numberOfLines={1}>
-            {task.task_name}
-          </Text>
-        
+        <View style={styles.header}>
+          <Image
+            source={{ uri: 'https://via.placeholder.com/50' }} // Replace with actual image URL or local asset
+            style={styles.avatar}
+          />
+          <Text style={styles.taskId}>ID: {task.taskId}</Text>
+          <Text style={styles.status}>Pending</Text>
         </View>
-
-        {/* Bottom info section */}
-        <View style={styles.bottomBox}>
-          <View style={styles.infoGroup}>
-            <Text style={styles.icon}>👤</Text>
-            <Text style={styles.infoText}>{task.empName}</Text>
-          </View>
-
-          <View style={styles.divider} />
-
-          <View style={styles.infoGroup}>
-            <Text style={styles.icon}>🕒</Text>
-            <Text style={styles.infoText}>{task.time}</Text>
-          </View>
-
-          <Text style={styles.dateText}>{formatDate(task.date)}</Text>
+        <Text style={styles.taskTitle}>{task.taskName}</Text>
+        <Text style={styles.description}>
+          {task.notes || 'No description available'}
+        </Text>
+        <View style={styles.details}>
+          <Text style={styles.detailText}>Care buddy</Text>
+          <Text style={styles.detailText}>{task.householdName}</Text>
+        </View>
+        <View style={styles.dateContainer}>
+          <Text style={styles.dateText}>Date</Text>
+          <Text style={styles.dateText}>{formatDate(task.updatedAt)}</Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -51,63 +50,68 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onTaskPress }) => {
 
 const styles = StyleSheet.create({
   cardContainer: {
-    marginHorizontal: 16,
-    marginVertical: 10,
-  },
-  topBox: {
     backgroundColor: '#fff',
-    borderRadius:15,
-    padding: 12,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    elevation: 3,
+    borderRadius: 10,
+    marginVertical: 10,
+    marginHorizontal: 16,
+    padding: 15,
+    elevation: 2,
     shadowColor: '#000',
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.1,
     shadowRadius: 4,
   },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  avatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    marginRight: 10,
+  },
+  taskId: {
+    fontSize: 14,
+    color: '#666',
+    marginRight: 10,
+  },
+  status: {
+    fontSize: 12,
+    color: '#f4a261',
+    backgroundColor: '#ffe8d1',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
   taskTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '600',
     color: '#1a1a1a',
-    flex: 1,
-    marginRight: 8,
+    marginBottom: 5,
   },
-  editIcon: {
-    fontSize: 16,
-    color: '#007C91',
+  description: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 10,
   },
-  bottomBox: {
-    backgroundColor: '#eee',
-    borderBottomLeftRadius: 16,
-    borderBottomRightRadius: 16,
-    padding: 12,
+  details: {
     flexDirection: 'row',
-    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 5,
+  },
+  dateContainer: {
+    flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  infoGroup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  icon: {
+  detailText: {
     fontSize: 14,
-    marginRight: 4,
-  },
-  infoText: {
-    fontSize: 13,
     color: '#1a1a1a',
-  },
-  divider: {
-    width: 1,
-    height: 20,
-    backgroundColor: '#ccc',
-    marginHorizontal: 8,
   },
   dateText: {
-    fontSize: 13,
-    color: '#1a1a1a',
+    fontSize: 14,
+    color: '#666',
   },
 });
 
-export default TaskCard;
+export default NewTaskCard;

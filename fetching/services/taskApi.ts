@@ -1,7 +1,8 @@
+import { API_URL } from '../../src/constants';
 import { TaskResponse } from '../types/taskTypes';
 
-const BASE_URL = 'https://kwnfmv39-443.inc1.devtunnels.ms/prayojana/member/householdtask';
-
+const BASE_URL = API_URL+'member/householdtask';
+console.log(BASE_URL);
 export class TaskApiService {
   static async fetchHouseholdTasks(householdId: number, userToken?: string | null): Promise<TaskResponse> {
     const url = `${BASE_URL}/${householdId}`;

@@ -7,18 +7,23 @@ import {
   SafeAreaView,
   ScrollView,
   ImageBackground,
+  Image,
 } from 'react-native';
-import { useAuth, useLoginDetails } from '../../context/AuthContext';
+import { useLoginDetails, useAuth } from '../../context/AuthContext';
 import HomeScreenHeader, { TeamMember, HeaderData } from '../../components/Homescreen/HomeScreenHeader';
 import TeamProfileSection from '../../components/Homescreen/TeamProfileSection';
+import Carousel from '../../components/Homescreen/Carousel';
+
 
 interface HomeScreenProps {
   onNavigateToDashboard: () => void;
 }
 
 const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToDashboard }) => {
-  const { logout } = useAuth();
   const loginDetails = useLoginDetails();
+  const { updateHouseholdId } = useAuth();
+  const [attendance, setAttendance] = useState<'attending' | 'not_attending' | null>(null);
+
   const [headerData, setHeaderData] = useState<HeaderData>({
     memberName: '',
     householdId: null,
@@ -27,78 +32,105 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToDashboard }) => {
     hasError: false,
   });
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
-  };
-
   const handleNotificationPress = () => {
     console.log('Notification icon pressed');
   };
 
   const handleTeamMemberPress = (member: TeamMember) => {
     console.log('Team member pressed:', member);
-    // Add navigation to team member profile or actions
   };
 
-  const handleHeaderDataLoaded = useCallback((data: HeaderData) => {
+  const handleHeaderDataLoaded = useCallback(async (data: HeaderData) => {
     setHeaderData(data);
-  }, []);
+    if (data.householdId && data.householdId !== loginDetails?.householdId) {
+      await updateHouseholdId(data.householdId);
+    }
+  }, [updateHouseholdId, loginDetails?.householdId]);
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Header Component */}
         <HomeScreenHeader
           onNotificationPress={handleNotificationPress}
           onDataLoaded={handleHeaderDataLoaded}
         />
 
-        {/* Main Content */}
-        <View style={styles.content}>
-          {/* Medicine Reminder Card */}
-          <ImageBackground
-            source={require('../../../assets/image/carousel.png')} // Change path if needed
-            style={styles.reminderCard}
-            imageStyle={{ borderRadius: 12 }}
-          >
-            <Text style={styles.reminderText}>Don’t forget to take your medicines on time.</Text>
-          </ImageBackground>
+        <Carousel />
 
-          {/* Team Profile Section */}
+        <View style={styles.content}>
+          <View style={styles.eventSection}>
+            <View style={styles.eventHeader}>
+              <Text style={styles.eventTitle}>Upcoming event</Text>
+              <TouchableOpacity>
+                <Text style={styles.seeAll}>see all</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Static Event Card with Local Assets */}
+            <View style={styles.eventCardContainer}>
+              <View style={styles.eventCardTop}>
+                <View style={styles.eventLeft}>
+                  <Text style={styles.eventName}>Semmozhi Poonga{"\n"}Visit</Text>
+                </View>
+                <View style={styles.verticalDivider} />
+                <View style={styles.eventRight}>
+                  <View style={styles.iconRow}>
+                    <Image
+                      source={require('../../../assets/image/icons/time.png')}
+                      style={styles.iconImage}
+                    />
+                    <View style={styles.textContainer}>
+                      <Text style={styles.iconText}>08:00 a.m</Text>
+                      <Text style={styles.iconText}>20 Aug 2025</Text>
+                    </View>
+                  </View>
+                </View>
+              </View>
+
+              <View style={styles.eventCardBottom}>
+                <TouchableOpacity
+                  style={styles.statusItem}
+                  onPress={() => setAttendance('attending')}
+                >
+                  <Image
+                    source={require('../../../assets/image/icons/accept.png')}
+                    style={styles.statusIconImage}
+                  />
+                  <Text
+                    style={[
+                      styles.statusLabel,
+                      attendance === 'attending' && styles.selectedLabel,
+                    ]}
+                  >
+                    Attending
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.statusItem}
+                  onPress={() => setAttendance('not_attending')}
+                >
+                  <Image
+                    source={require('../../../assets/image/icons/wrong.png')}
+                    style={styles.statusIconImage}
+                  />
+                  <Text
+                    style={[
+                      styles.statusLabel,
+                      attendance === 'not_attending' && styles.selectedLabel,
+                    ]}
+                  >
+                    Not Attending
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+
           <TeamProfileSection
             teamMembers={headerData.teamMembers}
             onTeamMemberPress={handleTeamMemberPress}
           />
-
-          {/* Debug Section */}
-          {__DEV__ && (
-            <View style={styles.debugSection}>
-              <Text style={styles.debugTitle}>Debug Info:</Text>
-              <Text style={styles.debugText}>Login Type: {loginDetails?.loginType}</Text>
-              <Text style={styles.debugText}>Member Name: {headerData.memberName}</Text>
-              <Text style={styles.debugText}>Loading: {headerData.isLoading ? 'Yes' : 'No'}</Text>
-              <Text style={styles.debugText}>Error: {headerData.hasError ? 'Yes' : 'No'}</Text>
-              <Text style={styles.debugText}>Household ID: {headerData.householdId || 'None'}</Text>
-              <Text style={styles.debugText}>Team Members: {headerData.teamMembers.length}</Text>
-            </View>
-          )}
-
-          {/* Logout Button */}
-          <View style={styles.mainContent}>
-            <View style={styles.buttonContainer}>
-              <TouchableOpacity
-                style={styles.logoutButton}
-                onPress={handleLogout}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.logoutButtonText}>Logout</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -118,79 +150,99 @@ const styles = StyleSheet.create({
     padding: 24,
     marginTop: -20,
   },
-
-  // Reminder Card
- reminderCard: {
-  marginTop:24,
-  width: '100%',
-  height: 120,
-  borderRadius: 12,
-  overflow: 'hidden',
-  justifyContent: 'center',
-  alignItems: 'center',
-  marginBottom: 24,
-  paddingTop: 12,
-  backgroundColor: '#e0f7fa', // fallback if image fails
-},
-reminderText: {
-  color: '#000',
-  fontSize: 18,
-  fontWeight: 'bold',
-  textAlign: 'center',
-  paddingHorizontal: 20,
-},
-
-
-  // Debug Section Styles
-  debugSection: {
-    backgroundColor: '#f0f0f0',
-    padding: 16,
-    marginBottom: 16,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#ddd',
+  eventSection: {
+    marginBottom: 24,
   },
-  debugTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
+  eventHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 8,
   },
-  debugText: {
-    fontSize: 12,
-    color: '#666',
-    marginBottom: 4,
+  eventTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
   },
-
-  // Main Content Styles
-  mainContent: {
+  seeAll: {
+    fontSize: 14,
+    color: '#007bff',
+  },
+  eventCardContainer: {
+    backgroundColor: '#e0e0e0',
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginTop: 12,
+    padding: 5,
+    paddingBottom: 15,
+  },
+  eventCardTop: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    padding: 16,
+    borderRadius: 10,
+  },
+  eventLeft: {
+    flex: 1,
     justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 20,
   },
-  buttonContainer: {
-    width: '100%',
-    alignItems: 'center',
+  eventRight: {
+    flex: 1,
+    justifyContent: 'center',
   },
-  logoutButton: {
-    backgroundColor: '#dc3545',
-    paddingHorizontal: 32,
-    paddingVertical: 12,
-    borderRadius: 25,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
+  verticalDivider: {
+    width: 1,
+    backgroundColor: '#ccc',
+    marginHorizontal: 12,
   },
-  logoutButtonText: {
-    color: '#ffffff',
+  eventName: {
     fontSize: 16,
     fontWeight: '600',
-    textAlign: 'center',
+    color: '#000',
+  },
+  iconRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 6,
+  },
+  iconImage: {
+    width: 32, // Increased icon size
+    height: 32, // Increased icon size
+    marginRight: 8,
+    resizeMode: 'contain',
+  },
+  textContainer: {
+    flexDirection: 'column',
+  },
+  iconText: {
+    fontSize: 14,
+    color: '#333',
+  },
+  eventCardBottom: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    backgroundColor: '#d9d9d9',
+    paddingVertical: 12,
+    borderBottomLeftRadius: 12,
+    borderBottomRightRadius: 12,
+  },
+  statusItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  statusIconImage: {
+    width: 20,
+    height: 20,
+    marginRight: 6,
+    resizeMode: 'contain',
+  },
+  statusLabel: {
+    fontSize: 14,
+    color: '#333',
+  },
+  selectedLabel: {
+    fontWeight: 'bold',
+    color: '#007bff',
   },
 });
 

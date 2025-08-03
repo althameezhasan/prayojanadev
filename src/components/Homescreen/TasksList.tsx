@@ -1,4 +1,3 @@
-// components/Tasks/TasksList.tsx
 import React from 'react';
 import {
   View,
@@ -51,7 +50,7 @@ const TasksList: React.FC<TasksListProps> = ({
   if (loading && !tasks) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#007C91" />
+        <ActivityIndicator size="large" color="#065084" />
         <Text style={styles.loadingText}>Loading tasks...</Text>
       </View>
     );
@@ -64,8 +63,8 @@ const TasksList: React.FC<TasksListProps> = ({
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        // <Text style={styles.headerTitle}>Household Tasks</Text>
-        // {tasks && (
+        <Text style={styles.headerTitle}>Household Tasks</Text>
+        {tasks && (
           <Text style={styles.taskCount}>
             {tasks.length} task{tasks.length !== 1 ? 's' : ''}
           </Text>
@@ -75,14 +74,14 @@ const TasksList: React.FC<TasksListProps> = ({
       <FlatList
         data={tasks || []}
         renderItem={renderTaskCard}
-        keyExtractor={(item) => item.task_id.toString()}
+        keyExtractor={(item) => item.taskId.toString()}
         showsVerticalScrollIndicator={false}
         refreshControl={
           onRefresh ? (
             <RefreshControl
               refreshing={loading}
               onRefresh={onRefresh}
-              colors={['#007C91']}
+              colors={['#065084']}
             />
           ) : undefined
         }
@@ -173,4 +172,3 @@ const styles = StyleSheet.create({
 });
 
 export default TasksList;
-

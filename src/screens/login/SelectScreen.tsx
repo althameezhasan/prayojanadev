@@ -76,8 +76,8 @@ const styles = StyleSheet.create({
     marginBottom: 40,
     textAlign: 'center',
   },
-  loginButton: {
-    backgroundColor: '#007C91',
+  getStartedButton: {
+    backgroundColor: '#065084',
     paddingVertical: 20,
     paddingHorizontal: 40,
     borderRadius: 10,

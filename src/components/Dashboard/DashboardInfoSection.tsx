@@ -58,7 +58,7 @@ const styles = StyleSheet.create({
   },
   tokenLabel: {
     fontSize: 14,
-    color: '#007C91',
+    color: '#065084',
     fontWeight: '600',
     marginBottom: 8,
   },
@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
   },
   detailLabel: {
     fontSize: 12,
-    color: '#007C91',
+    color: '#065084',
     marginBottom: 6,
     textAlign: 'center',
     fontWeight: '500',

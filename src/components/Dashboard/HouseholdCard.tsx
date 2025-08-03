@@ -38,7 +38,7 @@ const HouseholdCard: React.FC<HouseholdCardProps> = ({ household, onEdit }) => {
 
 const styles = StyleSheet.create({
   cardContainer: {
-    backgroundColor: '#007C91',
+    backgroundColor: '#065084',
     borderRadius: 16,
     padding: 16,
     marginVertical: 12,

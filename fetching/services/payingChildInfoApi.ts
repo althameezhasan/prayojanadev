@@ -1,7 +1,11 @@
 // services/payingChildInfoApi.ts
+import { API_URL } from '../../src/constants';
 import { PayingChildInfoResponse } from '../types/payingChildInfoTypes';
 
-const BASE_URL = 'https://kwnfmv39-443.inc1.devtunnels.ms/prayojana/member/payingchild/info';
+const BASE_URL = API_URL+'member/payingchild/info';
+console.log('PayingChild API LINK:',{
+  BASE_URL
+})
 
 export class PayingChildInfoApiService {
   static async fetchPayingChildInfo(memberId: number, userToken?: string | null): Promise<PayingChildInfoResponse> {

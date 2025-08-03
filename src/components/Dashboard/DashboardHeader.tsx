@@ -22,7 +22,7 @@ const CurvedDashboardHeader: React.FC<CurvedDashboardHeaderProps> = ({
 }) => {
   return (
     <View style={styles.container}>
-      <StatusBar backgroundColor="#007C91" barStyle="light-content" />
+      <StatusBar backgroundColor="#065084" barStyle="light-content" />
       
       {/* Background Image Header with Curve */}
       <ImageBackground

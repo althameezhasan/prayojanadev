@@ -1,9 +1,10 @@
 // src/screens/navigation/NavbarScreen.tsx
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, StatusBar, Image } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import HomeScreen from '../dashboard/HomeScreen';
-import ProfileScreen from '../Profile/ProfileScreen'; // Import the ProfileScreen
+import ProfileScreen from '../Profile/ProfileScreen';
+import TaskScreen from '../Task/TaskScreen';
 
 export type NavScreen = 'home' | 'task' | 'profile' | 'Interactions';
 
@@ -18,39 +19,53 @@ const NavbarScreen: React.FC = () => {
     { key: 'Interactions', label: 'Interactions', icon: require('../../../assets/image/icons/interactivity.png'), disabled: true },
   ];
 
-  const handleScreenChange = (screen: NavScreen) => {
-    setCurrentScreen(screen);
-  };
+  const handleScreenChange = useCallback((screen: NavScreen) => {
+    if (screen !== currentScreen) {
+      console.log('Navigating to:', screen);
+      setCurrentScreen(screen);
+    }
+  }, [currentScreen]);
+
+  const handleNavigateToDashboard = useCallback(() => {
+    handleScreenChange('task');
+  }, [handleScreenChange]);
 
   const renderScreen = () => {
-    switch (currentScreen) {
-      case 'home':
-        return <HomeScreen onNavigateToDashboard={() => handleScreenChange('task')} />;
-      case 'task':
-        return (
-          <View style={styles.screenContainer}>
-            <Text style={styles.screenTitle}>Task Screen</Text>
-            <Text style={styles.screenSubtitle}>Coming Soon...</Text>
-          </View>
-        );
-      case 'profile':
-        return <ProfileScreen />; // Render the ProfileScreen here
-      case 'Interactions':
-        return (
-          <View style={styles.screenContainer}>
-            <Text style={styles.screenTitle}>Interactions Screen</Text>
-            <Text style={styles.screenSubtitle}>Coming Soon...</Text>
-          </View>
-        );
-      default:
-        return <HomeScreen onNavigateToDashboard={() => handleScreenChange('task')} />;
+    try {
+      switch (currentScreen) {
+        case 'home':
+          return <HomeScreen onNavigateToDashboard={handleNavigateToDashboard} />;
+        case 'task':
+          return <TaskScreen />;
+        case 'profile':
+          return <ProfileScreen />;
+        case 'Interactions':
+          return (
+            <View style={styles.screenContainer}>
+              <Text style={styles.screenTitle}>Interactions Screen</Text>
+              <Text style={styles.screenSubtitle}>Coming Soon...</Text>
+            </View>
+          );
+        default:
+          return <HomeScreen onNavigateToDashboard={handleNavigateToDashboard} />;
+      }
+    } catch (error) {
+      console.error('Error rendering screen:', error);
+      return (
+        <View style={styles.screenContainer}>
+          <Text style={styles.screenTitle}>Error</Text>
+          <Text style={styles.screenSubtitle}>Something went wrong. Please try again.</Text>
+        </View>
+      );
     }
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
-      <View style={styles.content}>{renderScreen()}</View>
+      <View style={styles.content}>
+        {renderScreen()}
+      </View>
       <View style={styles.navbar}>
         {navItems.map((item) => (
           <TouchableOpacity
@@ -123,7 +138,7 @@ const styles = StyleSheet.create({
     tintColor: '#888',
   },
   navIconImageActive: {
-    tintColor: '#007C91',
+    tintColor: '#065084',
   },
   navIconImageDisabled: {
     tintColor: '#ccc',
@@ -134,7 +149,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   navLabelActive: {
-    color: '#007C91',
+    color: '#065084',
     fontWeight: '600',
   },
   navLabelDisabled: {

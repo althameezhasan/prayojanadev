@@ -1,3 +1,5 @@
+
+
 // types/payingChildInfoTypes.ts
 export interface PayingChildInfoResponse {
   message: {
@@ -14,6 +16,7 @@ export interface PayingChildInfoResponse {
       type: string;
       email: string | null;
       is_sponser: boolean;
+      profile_photo_url: string; // Added this field
       household: Array<{
         household_id: number;
         houseHoldName: string;

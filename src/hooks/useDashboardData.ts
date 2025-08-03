@@ -2,6 +2,7 @@
 import { useEffect, useCallback, useState } from 'react';
 import useHTTP from './http';
 import { HouseholdData } from '../../fetching/types';
+import { API_URL } from '../constants';
 
 interface UseDashboardDataProps {
   loginDetails?: { loginType: string; id: number } | null;
@@ -17,7 +18,7 @@ export const useDashboardData = ({ loginDetails, userToken }: UseDashboardDataPr
     if (loginDetails?.id && userToken && !fetched) {
       try {
         await callAPI({
-          url: `https://kwnfmv39-443.inc1.devtunnels.ms/prayojana/member/household/${loginDetails.id}`,
+          url: API_URL+`member/household/${loginDetails.id}`,
           method: 'GET',
           headers: {
             Authorization: `Bearer ${userToken}`,
