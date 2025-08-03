@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -8,14 +8,15 @@ import {
   ImageBackground,
   TouchableOpacity,
 } from 'react-native';
-import { useHouseholdId, useAuthToken } from '../../context/AuthContext';
+import { useHouseholdId, useAuthToken, useLoginDetails } from '../../context/AuthContext';
 import { Task } from '../../../fetching/types/taskTypes';
 import { useHouseholdTasks } from '../../hooks/useHouseholdTasks';
-import TasksList from '../../components/Task/TaskList'; // Import the merged component
+import TasksList from '../../components/Task/TaskList';
 
 const TaskScreen: React.FC = () => {
   const householdId = useHouseholdId();
   const token = useAuthToken();
+  const loginDetails = useLoginDetails();
 
   const { tasks, loading, error } = useHouseholdTasks({
     householdId: householdId ? Number(householdId) : null,
@@ -25,26 +26,47 @@ const TaskScreen: React.FC = () => {
 
   const [activeTab, setActiveTab] = useState('Planned');
 
+  // Define color based on login type (same logic as NavbarScreen)
+  const activeColor = useMemo(() => {
+    const loginType = loginDetails?.loginType;
+    const isMember = loginType === 'Member';
+    const color = isMember ? '#289546' : '#065084';
+    console.log('TaskScreen - Login Type:', loginType, 'Is Member:', isMember, 'Active Color:', color);
+    return color;
+  }, [loginDetails?.loginType]);
+
+  // Determine which top frame image to use based on login type
+  const getTopFrameImage = () => {
+    try {
+      if (loginDetails?.loginType === 'Member') {
+        return require('../../../assets/image/Member/TopFrame.png');
+      }
+      return require('../../../assets/image/TopFrame.png');
+    } catch (error) {
+      console.error('Error loading TopFrame image:', error);
+      return require('../../../assets/image/TopFrame.png'); // Fallback to default
+    }
+  };
+
   const handleRefresh = useCallback(() => {
     console.log('Refresh triggered - tasks will reload automatically');
   }, []);
 
   const handleTaskPress = useCallback(async (task: Task) => {
     try {
-      console.log('Task pressed:', task.task_name);
+      console.log('Task pressed:', task.taskName);
       
-      // Safe data extraction for alert
-      const taskName = task?.task_name || 'Unknown Task';
-      const empName = task?.empName || 'Unknown';
-      const location = task?.location || 'Unknown location';
+      const taskName = task?.taskName || 'Unknown Task';
+      const empName = task?.householdName || 'Unknown';
+      // const location = task?.location || 'Unknown location';
       const time = task?.time || 'Unknown time';
       const status = task?.status || 'Unknown status';
       const notes = task?.notes || 'No notes available';
       
       let dateString = 'Unknown date';
       try {
-        if (task?.date) {
-          const date = new Date(task.date);
+        if (task?.updatedAt) {
+          const date = new Date(task.updatedAt);
           if (!isNaN(date.getTime())) {
             dateString = date.toLocaleDateString();
           }
@@ -55,7 +77,7 @@ const TaskScreen: React.FC = () => {
 
       Alert.alert(
         taskName,
-        `Employee: ${empName}\nLocation: ${location}\nTime: ${time}\nDate: ${dateString}\nStatus: ${status}\n\nNotes: ${notes}`,
+        `Employee: ${empName}\nTime: ${time}\nDate: ${dateString}\nStatus: ${status}\n\nNotes: ${notes}`,
         [{ text: 'OK' }]
       );
     } catch (error) {
@@ -68,7 +90,6 @@ const TaskScreen: React.FC = () => {
     }
   }, []);
 
-  // Safe task filtering with comprehensive error handling
   const filteredTasks = React.useMemo(() => {
     try {
       if (!tasks || !Array.isArray(tasks)) {
@@ -101,18 +122,41 @@ const TaskScreen: React.FC = () => {
     }
   }, [tasks, activeTab]);
 
-  // Debug logging
   React.useEffect(() => {
     console.log('TaskScreen Debug Info:', {
       householdId,
       hasToken: !!token,
+      loginType: loginDetails?.loginType,
       tasksCount: tasks?.length || 0,
       loading,
       error: error?.message || error,
       activeTab,
       filteredCount: filteredTasks.length,
     });
-  }, [householdId, token, tasks, loading, error, activeTab, filteredTasks]);
+  }, [householdId, token, loginDetails, tasks, loading, error, activeTab, filteredTasks]);
+
+  // Get task count for each tab
+  const getTaskCount = (tabName: string) => {
+    if (!tasks || !Array.isArray(tasks)) return 0;
+    return tasks.filter(task => 
+      String(task?.status || '').toLowerCase() === tabName.toLowerCase()
+    ).length;
+  };
+
+  // Create dynamic styles based on active color
+  const dynamicStyles = useMemo(() => ({
+    tabButtonActive: {
+      backgroundColor: activeColor,
+      elevation: 3,
+      shadowColor: activeColor,
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.3,
+      shadowRadius: 6,
+    },
+    badgeTextActive: {
+      color: activeColor,
+    },
+  }), [activeColor]);
 
   if (!householdId) {
     return (
@@ -130,7 +174,7 @@ const TaskScreen: React.FC = () => {
   return (
     <SafeAreaView style={styles.container}>
       <ImageBackground
-        source={require('../../../assets/image/TopFrame.png')}
+        source={getTopFrameImage()}
         style={styles.topBanner}
         resizeMode="cover"
       >
@@ -144,30 +188,94 @@ const TaskScreen: React.FC = () => {
       </ImageBackground>
 
       <View style={styles.tabContainer}>
-        <TouchableOpacity 
-          onPress={() => setActiveTab('Planned')}
-          style={styles.tabButton}
-        >
-          <Text style={activeTab === 'Planned' ? styles.tabActive : styles.tab}>
-            Planned
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          onPress={() => setActiveTab('Upcoming')}
-          style={styles.tabButton}
-        >
-          <Text style={activeTab === 'Upcoming' ? styles.tabActive : styles.tab}>
-            Upcoming
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          onPress={() => setActiveTab('Completed')}
-          style={styles.tabButton}
-        >
-          <Text style={activeTab === 'Completed' ? styles.tabActive : styles.tab}>
-            Completed
-          </Text>
-        </TouchableOpacity>
+        <View style={styles.tabWrapper}>
+          <TouchableOpacity 
+            onPress={() => setActiveTab('Planned')}
+            style={[
+              styles.tabButton,
+              activeTab === 'Planned' && dynamicStyles.tabButtonActive
+            ]}
+            activeOpacity={0.7}
+          >
+            <Text style={[
+              styles.tabText,
+              activeTab === 'Planned' && styles.tabTextActive
+            ]}>
+              Planned
+            </Text>
+            {getTaskCount('Planned') > 0 && (
+              <View style={[
+                styles.badge,
+                activeTab === 'Planned' && styles.badgeActive
+              ]}>
+                <Text style={[
+                  styles.badgeText,
+                  activeTab === 'Planned' && dynamicStyles.badgeTextActive
+                ]}>
+                  {getTaskCount('Planned')}
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            onPress={() => setActiveTab('Upcoming')}
+            style={[
+              styles.tabButton,
+              activeTab === 'Upcoming' && dynamicStyles.tabButtonActive
+            ]}
+            activeOpacity={0.7}
+          >
+            <Text style={[
+              styles.tabText,
+              activeTab === 'Upcoming' && styles.tabTextActive
+            ]}>
+              Upcoming
+            </Text>
+            {getTaskCount('Upcoming') > 0 && (
+              <View style={[
+                styles.badge,
+                activeTab === 'Upcoming' && styles.badgeActive
+              ]}>
+                <Text style={[
+                  styles.badgeText,
+                  activeTab === 'Upcoming' && dynamicStyles.badgeTextActive
+                ]}>
+                  {getTaskCount('Upcoming')}
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            onPress={() => setActiveTab('Completed')}
+            style={[
+              styles.tabButton,
+              activeTab === 'Completed' && dynamicStyles.tabButtonActive
+            ]}
+            activeOpacity={0.7}
+          >
+            <Text style={[
+              styles.tabText,
+              activeTab === 'Completed' && styles.tabTextActive
+            ]}>
+              Completed
+            </Text>
+            {getTaskCount('Completed') > 0 && (
+              <View style={[
+                styles.badge,
+                activeTab === 'Completed' && styles.badgeActive
+              ]}>
+                <Text style={[
+                  styles.badgeText,
+                  activeTab === 'Completed' && dynamicStyles.badgeTextActive
+                ]}>
+                  {getTaskCount('Completed')}
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        </View>
       </View>
 
       <TasksList
@@ -205,47 +313,80 @@ const styles = StyleSheet.create({
   },
   backArrowText: {
     fontSize: 24,
-    color: '#000',
+    color: '#FFF',
     fontWeight: 'bold',
   },
   headerTitle: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: 'bold',
-    color: '#1a1a1a',
-    marginTop: 40,
+    color: '#FFFFFF',
+    marginTop: 0,
   },
+  // Enhanced tab container with better styling
   tabContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 12,
-    backgroundColor: '#e0f7f9',
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
+    borderBottomColor: '#e0e0e0',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
+  tabWrapper: {
+    flexDirection: 'row',
+    backgroundColor: '#f5f5f5',
+    borderRadius: 25,
+    padding: 4,
+    justifyContent: 'space-between',
+  },
+  // Enhanced tab button with rounded rectangle design
   tabButton: {
     flex: 1,
+    flexDirection: 'row',
     alignItems: 'center',
-  },
-  tabActive: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#00796b',
-    paddingVertical: 8,
+    justifyContent: 'center',
+    paddingVertical: 12,
     paddingHorizontal: 16,
-    backgroundColor: '#fff',
     borderRadius: 20,
-    textAlign: 'center',
-    minWidth: 80,
+    marginHorizontal: 2,
+    backgroundColor: 'transparent',
+    position: 'relative',
   },
-  tab: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#666',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
+  // Note: tabButtonActive is now handled by dynamicStyles
+  // Enhanced text styling
+  tabText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#666666',
     textAlign: 'center',
-    minWidth: 80,
   },
+  tabTextActive: {
+    color: '#ffffff',
+    fontWeight: '700',
+  },
+  // Task count badge
+  badge: {
+    backgroundColor: '#e0e0e0',
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 6,
+    paddingHorizontal: 6,
+  },
+  badgeActive: {
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+  },
+  badgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#666666',
+  },
+  // Note: badgeTextActive is now handled by dynamicStyles
   errorContainer: {
     flex: 1,
     justifyContent: 'center',

@@ -39,8 +39,6 @@ const TasksList: React.FC<TasksListProps> = ({
       notes: task?.notes ?? 'No description available',
       empName: task?.householdName ?? 'Unknown',
       date: task?.updatedAt ?? new Date().toISOString(),
-      location: task?.location ?? 'Unknown location',
-      time: task?.time ?? 'Unknown time',
     };
 
     const formatDate = (dateString: string) => {
@@ -66,19 +64,19 @@ const TasksList: React.FC<TasksListProps> = ({
       }
     };
 
-    // Determine status style based on task.status
-    const getStatusStyle = (status: string) => {
+    // Determine status color based on task.status
+    const getStatusColor = (status: string) => {
       const statusLower = String(status || 'pending').toLowerCase();
       switch (statusLower) {
         case 'pending':
         case 'planned':
-          return { color: '#f4a261', backgroundColor: '#ffe8d1' };
+          return '#f4a261';
         case 'upcoming':
-          return { color: '#6abf69', backgroundColor: '#e6f3e6' };
+          return '#6abf69';
         case 'completed':
-          return { color: '#4a90e2', backgroundColor: '#e6f0fa' };
+          return '#4a90e2';
         default:
-          return { color: '#f4a261', backgroundColor: '#ffe8d1' };
+          return '#f4a261';
       }
     };
 
@@ -91,47 +89,52 @@ const TasksList: React.FC<TasksListProps> = ({
           style={styles.cardTouchable}
         >
           <View style={styles.cardContainer}>
-            <View style={styles.header}>
+            <View style={styles.topRow}>
               <Image
                 source={{ uri: 'https://via.placeholder.com/50' }}
                 style={styles.avatar}
                 defaultSource={require('../../../assets/image/icons/user.png')} // Fallback
               />
-              <Text style={styles.taskId}>
-                ID: {String(safeTask.task_id)}
-              </Text>
-              <Text style={[styles.status, getStatusStyle(safeTask.status)]}>
-                {String(safeTask.status)}
-              </Text>
+              <View style={styles.rightSection}>
+                <View style={styles.taskInfoContainer}>
+                  <Text style={styles.taskId}>
+                    ID : {String(safeTask.task_id)}
+                  </Text>
+                  <Text style={styles.taskTitle}>
+                    {String(safeTask.task_name)}
+                  </Text>
+                </View>
+                <View style={styles.statusContainer}>
+                  <View 
+                    style={[
+                      styles.statusDot, 
+                      { backgroundColor: getStatusColor(safeTask.status) }
+                    ]} 
+                  />
+                  <Text style={styles.statusText}>
+                    {String(safeTask.status)}
+                  </Text>
+                </View>
+              </View>
             </View>
-            
-            <Text style={styles.taskTitle}>
-              {String(safeTask.task_name)}
-            </Text>
             
             <Text style={styles.description}>
               {String(safeTask.notes)}
             </Text>
             
-            <View style={styles.details}>
-              <Text style={styles.detailLabel}>Care buddy</Text>
-              <Text style={styles.detailText}>
-                {String(safeTask.empName)}
-              </Text>
-            </View>
-            
-            <View style={styles.details}>
-              <Text style={styles.detailLabel}>Location</Text>
-              <Text style={styles.detailText}>
-                {String(safeTask.location)}
-              </Text>
-            </View>
-            
-            <View style={styles.dateContainer}>
-              <Text style={styles.dateLabel}>Date</Text>
-              <Text style={styles.dateText}>
-                {formatDate(safeTask.date)}
-              </Text>
+            <View style={styles.bottomRow}>
+              <View style={styles.leftInfo}>
+                <Text style={styles.labelText}>Care buddy</Text>
+                <Text style={styles.valueText}>
+                  {String(safeTask.empName)}
+                </Text>
+              </View>
+              <View style={styles.rightInfo}>
+                <Text style={styles.labelText}>Date</Text>
+                <Text style={styles.valueText}>
+                  {formatDate(safeTask.date)}
+                </Text>
+              </View>
             </View>
           </View>
         </TouchableOpacity>
@@ -341,78 +344,83 @@ const styles = StyleSheet.create({
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 2 },
   },
-  header: {
+  topRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
     marginBottom: 12,
   },
   avatar: {
     width: 50,
     height: 50,
     borderRadius: 25,
-    marginRight: 12,
     backgroundColor: '#f0f0f0',
+  },
+  rightSection: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    flex: 1,
+    justifyContent: 'space-between',
+    marginLeft: 12,
+  },
+  taskInfoContainer: {
+    flex: 1,
+    marginRight: 12,
   },
   taskId: {
     fontSize: 14,
     color: '#666',
-    flex: 1,
     fontWeight: '500',
+    marginBottom: 4,
   },
-  status: {
-    fontSize: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    fontWeight: '600',
+  statusContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 6,
+  },
+  statusText: {
+    fontSize: 14,
+    color: '#333',
     textTransform: 'capitalize',
   },
   taskTitle: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
     color: '#1a1a1a',
-    marginBottom: 8,
-    lineHeight: 24,
+    lineHeight: 20,
   },
   description: {
     fontSize: 14,
     color: '#666',
-    marginBottom: 12,
+    marginBottom: 15,
     lineHeight: 20,
   },
-  details: {
+  bottomRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
+    alignItems: 'flex-start',
   },
-  detailLabel: {
+  leftInfo: {
+    flex: 1,
+  },
+  rightInfo: {
+    flex: 1,
+    alignItems: 'flex-end',
+  },
+  labelText: {
+    fontSize: 12,
+    color: '#999',
+    marginBottom: 2,
+  },
+  valueText: {
     fontSize: 14,
     color: '#1a1a1a',
     fontWeight: '500',
-  },
-  detailText: {
-    fontSize: 14,
-    color: '#666',
-    flex: 1,
-    textAlign: 'right',
-  },
-  dateContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 4,
-  },
-  dateLabel: {
-    fontSize: 14,
-    color: '#1a1a1a',
-    fontWeight: '500',
-  },
-  dateText: {
-    fontSize: 14,
-    color: '#666',
-    flex: 1,
-    textAlign: 'right',
   },
   errorCard: {
     backgroundColor: '#ffebee',

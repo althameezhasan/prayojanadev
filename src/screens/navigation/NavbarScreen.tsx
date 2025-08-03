@@ -1,5 +1,5 @@
 // src/screens/navigation/NavbarScreen.tsx
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, StatusBar, Image } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import HomeScreen from '../dashboard/HomeScreen';
@@ -9,8 +9,19 @@ import TaskScreen from '../Task/TaskScreen';
 export type NavScreen = 'home' | 'task' | 'profile' | 'Interactions';
 
 const NavbarScreen: React.FC = () => {
-  const { logout } = useAuth();
+  const { logout, state } = useAuth();
   const [currentScreen, setCurrentScreen] = useState<NavScreen>('home');
+
+  // Define color codes based on login type
+  const activeColor = useMemo(() => {
+    const loginType = state.user?.loginDetails?.loginType;
+    // Fix: Compare with 'Member' (capital M) instead of 'member'
+    const isMember = loginType === 'Member';
+    const color = isMember ? '#289546' : '#065084';
+    console.log(color)
+    console.log('Login Type:', loginType, 'Is Member:', isMember, 'Active Color:', color);
+    return color;
+  }, [state.user?.loginDetails?.loginType]);
 
   const navItems: { key: NavScreen; label: string; icon: any; disabled?: boolean }[] = [
     { key: 'home', label: 'Home', icon: require('../../../assets/image/icons/home-page.png') },
@@ -60,9 +71,20 @@ const NavbarScreen: React.FC = () => {
     }
   };
 
+  // Create dynamic styles based on active color
+  const dynamicStyles = useMemo(() => ({
+    navIconImageActive: {
+      tintColor: activeColor,
+    },
+    navLabelActive: {
+      color: activeColor,
+      fontWeight: '600',
+    },
+  }), [activeColor]);
+
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+      <StatusBar barStyle="dark-content" backgroundColor={activeColor} />
       <View style={styles.content}>
         {renderScreen()}
       </View>
@@ -79,14 +101,14 @@ const NavbarScreen: React.FC = () => {
               source={item.icon}
               style={[
                 styles.navIconImage,
-                currentScreen === item.key && styles.navIconImageActive,
+                currentScreen === item.key && dynamicStyles.navIconImageActive,
                 item.disabled && styles.navIconImageDisabled,
               ]}
             />
             <Text
               style={[
                 styles.navLabel,
-                currentScreen === item.key && styles.navLabelActive,
+                currentScreen === item.key && dynamicStyles.navLabelActive,
                 item.disabled && styles.navLabelDisabled,
               ]}
             >
@@ -137,9 +159,6 @@ const styles = StyleSheet.create({
     resizeMode: 'contain',
     tintColor: '#888',
   },
-  navIconImageActive: {
-    tintColor: '#065084',
-  },
   navIconImageDisabled: {
     tintColor: '#ccc',
   },
@@ -147,10 +166,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#888',
     fontWeight: '500',
-  },
-  navLabelActive: {
-    color: '#065084',
-    fontWeight: '600',
   },
   navLabelDisabled: {
     color: '#ccc',

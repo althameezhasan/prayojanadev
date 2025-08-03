@@ -1,51 +1,56 @@
-import React, { useEffect, useState } from 'react';
-import FontAwesome from 'react-native-vector-icons/FontAwesome';
-
+import React, { useCallback, useEffect, useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
   SafeAreaView,
-  ActivityIndicator,
   ScrollView,
-  Image,
-  Modal,
+  StyleSheet,
+  ImageBackground,
 } from 'react-native';
 import { useAuth, useLoginDetails, useAuthToken } from '../../context/AuthContext';
 import { useMemberInfo } from '../../hooks/useMemberInfo';
 import { useRelativeInfo } from '../../hooks/useRelativeInfo';
 import { usePayingChildInfo } from '../../hooks/usePayingChildInfo';
-import { MemberInfoMember, MemberInfoCarebuddy, MemberInfoResponse } from '../../../fetching/types/memberInfoTypes';
-import { RelativeInfoResponse } from '../../../fetching/types/relativeInfoTypes';
-import { PayingChildInfoResponse } from '../../../fetching/types/payingChildInfoTypes';
+
+// Import our new components
+import ProfileHeader from '../../components/profile/ProfileHeader';
+import ProfileCard from '../../components/profile/ProfileCard';
+import ProfileMenu from '../../components/profile/ProfileMenu';
+import LogoutButton from '../../components/profile/LogoutButton';
+import {
+  PersonalDetailsModal,
+  MemberInfoModal,
+  TeamInfoModal,
+  RelativeInfoModal,
+  SponsorDetailsModal,
+} from '../../components/profile/ProfileModals';
 
 interface ProfileData {
   name: string;
   memberId: number | null;
   memberType: string;
+  profilePhotoUrl: string | null;
 }
 
 const ProfileScreen: React.FC = () => {
   const { logout } = useAuth();
   const loginDetails = useLoginDetails();
   const userToken = useAuthToken();
-  
+
   const [profileData, setProfileData] = useState<ProfileData>({
     name: '',
     memberId: null,
     memberType: '',
+    profilePhotoUrl: null,
   });
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [hasError, setHasError] = useState<boolean>(false);
-  
+
   // Modal states for different sections
   const [memberInfoModalVisible, setMemberInfoModalVisible] = useState(false);
   const [teamInfoModalVisible, setTeamInfoModalVisible] = useState(false);
   const [personalDetailsModalVisible, setPersonalDetailsModalVisible] = useState(false);
   const [relativeInfoModalVisible, setRelativeInfoModalVisible] = useState(false);
   const [sponsorDetailsModalVisible, setSponsorDetailsModalVisible] = useState(false);
-  
+
   // States to track which data to fetch
   const [shouldFetchMemberDetails, setShouldFetchMemberDetails] = useState(false);
   const [shouldFetchTeamDetails, setShouldFetchTeamDetails] = useState(false);
@@ -57,18 +62,32 @@ const ProfileScreen: React.FC = () => {
   const shouldFetchPayingChildInfo = loginDetails?.loginType === 'Paying Child';
   const memberId = loginDetails?.id || null;
 
-  //Getting Relation_iD
-
-  const getRelationId = () => {
-  if (shouldFetchMemberInfo && initialMemberInfo && profileData.memberType === 'Member') {
-    // Get relation_id from the relativeData array in member info response
-    const relativeData = initialMemberInfo.message.data.relativeData;
-    if (relativeData && relativeData.length > 0) {
-      return relativeData[0].relation_id; // Use the first relation_id
+  // Function to get background image based on user type
+  const getBackgroundImage = () => {
+    const userType = profileData.memberType || loginDetails?.loginType || 'Member';
+    
+    switch (userType) {
+      case 'Member':
+        return require('../../../assets/image/Member/Profilebg.png');
+      // case 'Relative':
+      //   return require('../../../assets/image/Profilebg.png');
+      // case 'Paying Child':
+      //   return require('../../../assets/image/PayingChild/Profilebg.png');
+      default:
+        return require('../../../assets/image/Profilebg.png'); // fallback to default
     }
-  }
-  return null;
-};
+  };
+
+  // Getting Relation_ID
+  const getRelationId = () => {
+    if (shouldFetchMemberInfo && initialMemberInfo && profileData.memberType === 'Member') {
+      const relativeData = initialMemberInfo.message.data.relativeData;
+      if (relativeData && relativeData.length > 0) {
+        return relativeData[0].relation_id;
+      }
+    }
+    return null;
+  };
 
   // Hook for initial profile data
   const { memberInfo: initialMemberInfo, loading: memberLoading, error: memberError } = useMemberInfo({
@@ -78,20 +97,20 @@ const ProfileScreen: React.FC = () => {
   });
 
   const { relativeInfo, loading: relativeLoading, error: relativeError } = useRelativeInfo({
-  memberId: shouldFetchRelativeInfo || shouldFetchRelativeDetails 
-    ? (profileData.memberType === 'Member' ? getRelationId() : (loginDetails?.id || 998)) 
-    : null,
-  userToken: userToken,
-  shouldFetch: shouldFetchRelativeInfo || shouldFetchRelativeDetails,
-});
+    memberId: shouldFetchRelativeInfo || shouldFetchRelativeDetails
+      ? profileData.memberType === 'Member' ? getRelationId() : (loginDetails?.id || 998)
+      : null,
+    userToken: userToken,
+    shouldFetch: shouldFetchRelativeInfo || shouldFetchRelativeDetails,
+  });
 
-const { payingChildInfo, loading: payingChildLoading, error: payingChildError } = usePayingChildInfo({
-  memberId: shouldFetchPayingChildInfo || shouldFetchSponsorDetails 
-    ? (profileData.memberType === 'Member' ? getRelationId() : memberId) 
-    : null,
-  userToken: userToken,
-  shouldFetch: shouldFetchPayingChildInfo || shouldFetchSponsorDetails,
-});
+  const { payingChildInfo, loading: payingChildLoading, error: payingChildError } = usePayingChildInfo({
+    memberId: shouldFetchPayingChildInfo || shouldFetchSponsorDetails
+      ? profileData.memberType === 'Member' ? getRelationId() : memberId
+      : null,
+    userToken: userToken,
+    shouldFetch: shouldFetchPayingChildInfo || shouldFetchSponsorDetails,
+  });
 
   // Hook for detailed member information (when Member Info is clicked)
   const { memberInfo: detailedMemberInfo, loading: detailedMemberLoading, error: detailedMemberError } = useMemberInfo({
@@ -107,129 +126,130 @@ const { payingChildInfo, loading: payingChildLoading, error: payingChildError } 
     shouldFetch: shouldFetchTeamDetails,
   });
 
+  // Process API responses and set profile data
   useEffect(() => {
-  setIsLoading(
-    (shouldFetchMemberInfo && memberLoading) ||
-    (shouldFetchRelativeInfo && relativeLoading) ||
-    (shouldFetchPayingChildInfo && payingChildLoading)
-  );
-
-  setHasError(
-    (shouldFetchMemberInfo && !!memberError) ||
-    (shouldFetchRelativeInfo && !!relativeError) ||
-    (shouldFetchPayingChildInfo && !!payingChildError)
-  );
-
-  if (shouldFetchMemberInfo && initialMemberInfo && loginDetails?.id) {
-    setProfileData({
-      name: initialMemberInfo.message.data.memberName || 'Member',
-      memberId: initialMemberInfo.message.data.memberId || loginDetails.id,
-      memberType: loginDetails.loginType,
-    });
-  }
-
-  if (shouldFetchRelativeInfo && relativeInfo && loginDetails?.id) {
-    const currentMember = relativeInfo.message.data.members.find(
-      (member) => member.memberId === loginDetails.id
+    setIsLoading(
+      (shouldFetchMemberInfo && memberLoading) ||
+      (shouldFetchRelativeInfo && relativeLoading) ||
+      (shouldFetchPayingChildInfo && payingChildLoading)
     );
-    setProfileData({
-      name: currentMember ? currentMember.memberName : relativeInfo.message.data.name || 'Relative',
-      memberId: loginDetails.id,
-      memberType: loginDetails.loginType,
-    });
-  }
 
-  if (shouldFetchPayingChildInfo && payingChildInfo && loginDetails?.id) {
-    const currentMember = payingChildInfo.message.data.members.find(
-      (member) => member.memberId === loginDetails.id
+    setHasError(
+      (shouldFetchMemberInfo && !!memberError) ||
+      (shouldFetchRelativeInfo && !!relativeError) ||
+      (shouldFetchPayingChildInfo && !!payingChildError)
     );
-    setProfileData({
-      name: currentMember ? currentMember.memberName : payingChildInfo.message.data.name || 'Paying Child',
-      memberId: loginDetails.id,
-      memberType: loginDetails.loginType,
-    });
-  }
 
-  if (!shouldFetchMemberInfo && !shouldFetchRelativeInfo && !shouldFetchPayingChildInfo) {
-    setProfileData({
-      name: loginDetails?.loginType || 'User',
-      memberId: loginDetails?.id || null,
-      memberType: loginDetails?.loginType || 'Unknown',
-    });
-    setIsLoading(false);
-  }
-}, [
-  initialMemberInfo,
-  relativeInfo,
-  payingChildInfo,
-  loginDetails,
-  shouldFetchMemberInfo,
-  shouldFetchRelativeInfo,
-  shouldFetchPayingChildInfo,
-  memberLoading,
-  relativeLoading,
-  payingChildLoading,
-  memberError,
-  relativeError,
-  payingChildError,
-  getRelationId(), // Add this to dependencies
-]);
+    if (shouldFetchMemberInfo && initialMemberInfo && loginDetails?.id) {
+      const data = initialMemberInfo.message.data;
+      let name = 'Member';
+      let profilePhotoUrl: string | null = data.memberPic || null;
 
-  // Log detailed API responses
+      if (data.memberName && data.memberId === loginDetails.id) {
+        name = data.memberName;
+      } else if (data.memberArr && data.memberArr.length > 0) {
+        const currentMember = data.memberArr.find(
+          (member) => member.memberId === loginDetails.id,
+        );
+        if (currentMember) {
+          name = currentMember.memberName;
+          if (!profilePhotoUrl && currentMember.memberPic) {
+            profilePhotoUrl = currentMember.memberPic;
+          }
+        }
+      }
+
+      setProfileData({
+        name,
+        memberId: data.memberId || loginDetails.id,
+        memberType: loginDetails.loginType,
+        profilePhotoUrl,
+      });
+    }
+
+    if (shouldFetchRelativeInfo && relativeInfo && loginDetails?.id) {
+      const currentMember = relativeInfo.message.data.members.find(
+        (member) => member.memberId === loginDetails.id
+      );
+      
+      const profilePhotoUrl = relativeInfo.message.data.profile_photo_url || 
+                              (currentMember ? currentMember.memberPic : null);
+      
+      setProfileData({
+        name: currentMember ? currentMember.memberName : relativeInfo.message.data.name || 'Relative',
+        memberId: loginDetails.id,
+        memberType: loginDetails.loginType,
+        profilePhotoUrl,
+      });
+    }
+
+    if (shouldFetchPayingChildInfo && payingChildInfo && loginDetails?.id) {
+      const currentMember = payingChildInfo.message.data.members.find(
+        (member) => member.memberId === loginDetails.id
+      );
+      
+      const profilePhotoUrl = payingChildInfo.message.data.profile_photo_url || 
+                              (currentMember ? currentMember.memberPic : null);
+      
+      setProfileData({
+        name: currentMember ? currentMember.memberName : payingChildInfo.message.data.name || 'Paying Child',
+        memberId: loginDetails.id,
+        memberType: loginDetails.loginType,
+        profilePhotoUrl,
+      });
+    }
+
+    if (!shouldFetchMemberInfo && !shouldFetchRelativeInfo && !shouldFetchPayingChildInfo) {
+      setProfileData({
+        name: loginDetails?.loginType || 'User',
+        memberId: loginDetails?.id || null,
+        memberType: loginDetails?.loginType || 'Unknown',
+        profilePhotoUrl: null,
+      });
+      setIsLoading(false);
+    }
+  }, [
+    initialMemberInfo,
+    relativeInfo,
+    payingChildInfo,
+    loginDetails,
+    shouldFetchMemberInfo,
+    shouldFetchRelativeInfo,
+    shouldFetchPayingChildInfo,
+    memberLoading,
+    relativeLoading,
+    payingChildLoading,
+    memberError,
+    relativeError,
+    payingChildError,
+  ]);
+
+  // Log detailed API responses (you can remove these if not needed)
   useEffect(() => {
     if (shouldFetchMemberDetails && detailedMemberInfo && !detailedMemberLoading && !detailedMemberError) {
-      console.log('🎯 =================================');
-      console.log('🎯 MEMBER DETAILS API RESPONSE');
-      console.log('🎯 =================================');
-      console.log('👤 Member:', JSON.stringify({
-        memberId: detailedMemberInfo.message.data.memberId,
-        memberName: detailedMemberInfo.message.data.memberName,
-        phone: detailedMemberInfo.message.data.phone,
-        email: detailedMemberInfo.message.data.email,
-        health_condition: detailedMemberInfo.message.data.health_condition,
-        gender: detailedMemberInfo.message.data.gender,
-        dob: detailedMemberInfo.message.data.dob,
-      }, null, 2));
-      console.log('🏠 Household:', JSON.stringify(detailedMemberInfo.message.data.household, null, 2));
-      console.log('👥 Legacy Member Array:', JSON.stringify(detailedMemberInfo.message.data.memberArr, null, 2));
-      console.log('🎯 =================================');
+      console.log('🎯 MEMBER DETAILS API RESPONSE', detailedMemberInfo.message.data);
     }
   }, [shouldFetchMemberDetails, detailedMemberInfo, detailedMemberLoading, detailedMemberError]);
 
   useEffect(() => {
     if (shouldFetchTeamDetails && teamMemberInfo && !teamMemberLoading && !teamMemberError) {
-      console.log('🎯 =================================');
-      console.log('🎯 TEAM DETAILS API RESPONSE');
-      console.log('🎯2174');
-      console.log('🤝 Carebuddy Object:', JSON.stringify(teamMemberInfo.message.data.carebuddies, null, 2));
-      console.log('👮 Captain Object:', JSON.stringify(teamMemberInfo.message.data.captains, null, 2));
-      console.log('🎯 =================================');
+      console.log('🎯 TEAM DETAILS API RESPONSE', teamMemberInfo.message.data);
     }
   }, [shouldFetchTeamDetails, teamMemberInfo, teamMemberLoading, teamMemberError]);
 
   useEffect(() => {
     if (shouldFetchRelativeDetails && relativeInfo && !relativeLoading && !relativeError) {
-      console.log('🎯 =================================');
-      console.log('🎯 RELATIVE DETAILS API RESPONSE');
-      console.log('🎯 =================================');
-      console.log('👥 Members:', JSON.stringify(relativeInfo.message.data.members, null, 2));
-      console.log('🏠 Household:', JSON.stringify(relativeInfo.message.data.household, null, 2));
-      console.log('👨‍✈️ Captains:', JSON.stringify(relativeInfo.message.data.captains, null, 2));
-      console.log('🤝 Care Buddies:', JSON.stringify(relativeInfo.message.data.carebuddies, null, 2));
-      console.log('🎯 =================================');
+      console.log('🎯 RELATIVE DETAILS API RESPONSE', relativeInfo.message.data);
     }
   }, [shouldFetchRelativeDetails, relativeInfo, relativeLoading, relativeError]);
 
   useEffect(() => {
     if (shouldFetchSponsorDetails && payingChildInfo && !payingChildLoading && !payingChildError) {
-      console.log('🎯 =================================');
-      console.log('🎯 SPONSOR DETAILS API RESPONSE');
-      console.log('🎯 =================================');
-      console.log('👤 Sponsor:', JSON.stringify(payingChildInfo.message.data, null, 2));
-      console.log('🎯 =================================');
+      console.log('🎯 SPONSOR DETAILS API RESPONSE', payingChildInfo.message.data);
     }
   }, [shouldFetchSponsorDetails, payingChildInfo, payingChildLoading, payingChildError]);
 
+  // Event handlers
   const handleLogout = async () => {
     try {
       await logout();
@@ -237,6 +257,10 @@ const { payingChildInfo, loading: payingChildLoading, error: payingChildError } 
       console.error('Logout error:', error);
     }
   };
+
+  const handleProfilePhotoError = useCallback(() => {
+    setProfileData((prev) => ({ ...prev, profilePhotoUrl: null }));
+  }, []);
 
   const handleMemberInfoPress = () => {
     setShouldFetchMemberDetails(true);
@@ -262,8 +286,26 @@ const { payingChildInfo, loading: payingChildLoading, error: payingChildError } 
     setSponsorDetailsModalVisible(true);
   };
 
-  const avatarLetter = profileData.name ? profileData.name.charAt(0).toUpperCase() : 'U';
-  const showRelativesTab = profileData.memberType !== 'Relative';
+  // Close modal handlers
+  const handleCloseMemberInfoModal = () => {
+    setMemberInfoModalVisible(false);
+    setShouldFetchMemberDetails(false);
+  };
+
+  const handleCloseTeamInfoModal = () => {
+    setTeamInfoModalVisible(false);
+    setShouldFetchTeamDetails(false);
+  };
+
+  const handleCloseRelativeInfoModal = () => {
+    setRelativeInfoModalVisible(false);
+    setShouldFetchRelativeDetails(false);
+  };
+
+  const handleCloseSponsorDetailsModal = () => {
+    setSponsorDetailsModalVisible(false);
+    setShouldFetchSponsorDetails(false);
+  };
 
   // Get current member data for personal details
   const getCurrentMemberData = () => {
@@ -289,1151 +331,91 @@ const { payingChildInfo, loading: payingChildLoading, error: payingChildError } 
     return null;
   };
 
-  // Render Member Info Card
-  const renderMemberInfoCard = (member: MemberInfoMember | MemberInfoResponse['message']['data'], index: number) => (
-    <View key={index} style={styles.infoCard}>
-      <View style={styles.cardHeader}>
-        <View style={styles.memberImageContainer}>
-          {member.memberPic ? (
-            <Image source={{ uri: member.memberPic }} style={styles.memberImage} />
-          ) : (
-            <View style={styles.memberImagePlaceholder}>
-              <Text style={styles.memberImageText}>
-                {member.memberName.charAt(0).toUpperCase()}
-              </Text>
-            </View>
-          )}
-        </View>
-        <View style={styles.memberInfoContainer}>
-          <Text style={styles.memberName}>{member.memberName}</Text>
-          <Text style={styles.memberDetail}>ID: {member.memberId}</Text>
-          <Text style={styles.memberDetail}>Phone: {member.phone}</Text>
-          {/* <Text style={styles.memberDetail}>Gender: {member.g || member.gender}</Text> */}
-          {/* <Text style={styles.memberDetail}>DOB: {member.dob || member.dob}</Text> */}
-          <Text style={[styles.memberDetail, { color: getHealthColor(member.health_condition) }]}>
-            Health: {member.health_condition}
-          </Text>
-          {/* <Text style={styles.memberDetail}>Status: {member.reference_status?.name || member.reference_status_name}</Text> */}
-        </View>
-      </View>
-    </View>
-  );
-
-  // Render Care Buddy Card
-  const renderCareBuddyCard = (carebuddy: MemberInfoCarebuddy, index: number) => (
-    <View key={index} style={styles.infoCard}>
-      <View style={styles.cardHeader}>
-        <View style={styles.memberImageContainer}>
-          {carebuddy.profilePic ? (
-            <Image source={{ uri: carebuddy.profilePic }} style={styles.memberImage} />
-          ) : (
-            <View style={styles.memberImagePlaceholder}>
-              <Text style={styles.memberImageText}>
-                {carebuddy.carebuddyName.charAt(0).toUpperCase()}
-              </Text>
-            </View>
-          )}
-        </View>
-        <View style={styles.memberInfoContainer}>
-          <Text style={styles.memberName}>{carebuddy.carebuddyName}</Text>
-          <Text style={styles.memberDetail}>Type: {carebuddy.carebuddyType}</Text>
-        </View>
-      </View>
-    </View>
-  );
-
-  // Render Relative Member Card
-  const renderRelativeMemberCard = (member: RelativeInfoResponse['message']['data']['members'][0], index: number) => (
-    <View key={index} style={styles.infoCard}>
-      <View style={styles.cardHeader}>
-        <View style={styles.memberImageContainer}>
-          {member.memberPic ? (
-            <Image source={{ uri: member.memberPic }} style={styles.memberImage} />
-          ) : (
-            <View style={styles.memberImagePlaceholder}>
-              <Text style={styles.memberImageText}>
-                {member.memberName.charAt(0).toUpperCase()}
-              </Text>
-            </View>
-          )}
-        </View>
-        <View style={styles.memberInfoContainer}>
-          <Text style={styles.memberName}>{member.memberName}</Text>
-          <Text style={styles.memberDetail}>ID: {member.memberId}</Text>
-          <Text style={styles.memberDetail}>Phone: {member.phone}</Text>
-          <Text style={styles.memberDetail}>Gender: {member.gender}</Text>
-          <Text style={styles.memberDetail}>DOB: {member.dob}</Text>
-          <Text style={[styles.memberDetail, { color: getHealthColor(member.health_condition) }]}>
-            Health: {member.health_condition}
-          </Text>
-          <Text style={styles.memberDetail}>Status: {member.reference_status_name}</Text>
-        </View>
-      </View>
-    </View>
-  );
-
-  // Render Relative Captain Card
-  const renderRelativeCaptainCard = (captain: RelativeInfoResponse['message']['data']['captains'][0], index: number) => (
-    <View key={index} style={styles.infoCard}>
-      <View style={styles.cardHeader}>
-        <View style={styles.memberImageContainer}>
-          {captain.profilePic ? (
-            <Image source={{ uri: captain.profilePic }} style={styles.memberImage} />
-          ) : (
-            <View style={styles.memberImagePlaceholder}>
-              <Text style={styles.memberImageText}>
-                {captain.name.charAt(0).toUpperCase()}
-              </Text>
-            </View>
-          )}
-        </View>
-        <View style={styles.memberInfoContainer}>
-          <Text style={styles.memberName}>{captain.name}</Text>
-          <Text style={styles.memberDetail}>Employee ID: {captain.empId}</Text>
-          <Text style={styles.memberDetail}>User ID: {captain.id}</Text>
-        </View>
-      </View>
-    </View>
-  );
-
-  // Render Relative Care Buddy Card
-  const renderRelativeCareBuddyCard = (carebuddy: RelativeInfoResponse['message']['data']['carebuddies'][0], index: number) => (
-    <View key={index} style={styles.infoCard}>
-      <View style={styles.cardHeader}>
-        <View style={styles.memberImageContainer}>
-          {carebuddy.profilePic ? (
-            <Image source={{ uri: carebuddy.profilePic }} style={styles.memberImage} />
-          ) : (
-            <View style={styles.memberImagePlaceholder}>
-              <Text style={styles.memberImageText}>
-                {carebuddy.carebuddyName.charAt(0).toUpperCase()}
-              </Text>
-            </View>
-          )}
-        </View>
-        <View style={styles.memberInfoContainer}>
-          <Text style={styles.memberName}>{carebuddy.carebuddyName}</Text>
-          <Text style={styles.memberDetail}>Type: {carebuddy.carebuddyType}</Text>
-        </View>
-      </View>
-    </View>
-  );
-
-  // Render Household Card
-  const renderHouseholdCard = (household: RelativeInfoResponse['message']['data']['household'][0], index: number) => (
-    <View key={index} style={styles.infoCard}>
-      <View style={styles.cardHeader}>
-        <View style={styles.memberInfoContainer}>
-          <Text style={styles.memberName}>{household.houseHoldName}</Text>
-          <Text style={styles.memberDetail}>Household ID: {household.household_id}</Text>
-          <Text style={styles.memberDetail}>Mobile: {household.mobileNum}</Text>
-          <Text style={styles.memberDetail}>Location: {household.location}</Text>
-          <Text style={styles.memberDetail}>City: {household.city}</Text>
-          <Text style={styles.memberDetail}>Address: {household.address}</Text>
-          <Text style={styles.memberDetail}>Emergency Contact: {household.emergencyContact}</Text>
-        </View>
-      </View>
-    </View>
-  );
-
-  // Render Sponsor Member Card
-  const renderSponsorMemberCard = (member: PayingChildInfoResponse['message']['data']['members'][0], index: number) => (
-    <View key={index} style={styles.infoCard}>
-      <View style={styles.cardHeader}>
-        <View style={styles.memberImageContainer}>
-          {member.memberPic ? (
-            <Image source={{ uri: member.memberPic }} style={styles.memberImage} />
-          ) : (
-            <View style={styles.memberImagePlaceholder}>
-              <Text style={styles.memberImageText}>
-                {member.memberName.charAt(0).toUpperCase()}
-              </Text>
-            </View>
-          )}
-        </View>
-        <View style={styles.memberInfoContainer}>
-          <Text style={styles.memberName}>{member.memberName}</Text>
-          <Text style={styles.memberDetail}>ID: {member.memberId}</Text>
-          <Text style={styles.memberDetail}>Phone: {member.phone}</Text>
-          <Text style={styles.memberDetail}>Gender: {member.gender}</Text>
-          <Text style={styles.memberDetail}>DOB: {member.dob}</Text>
-          <Text style={[styles.memberDetail, { color: getHealthColor(member.health_condition) }]}>
-            Health: {member.health_condition}
-          </Text>
-          <Text style={styles.memberDetail}>Status: {member.reference_status_name}</Text>
-        </View>
-      </View>
-    </View>
-  );
-
-  // Render Sponsor Captain Card
-  const renderSponsorCaptainCard = (captain: PayingChildInfoResponse['message']['data']['captains'][0], index: number) => (
-    <View key={index} style={styles.infoCard}>
-      <View style={styles.cardHeader}>
-        <View style={styles.memberImageContainer}>
-          {captain.profilePic ? (
-            <Image source={{ uri: captain.profilePic }} style={styles.memberImage} />
-          ) : (
-            <View style={styles.memberImagePlaceholder}>
-              <Text style={styles.memberImageText}>
-                {captain.name.charAt(0).toUpperCase()}
-              </Text>
-            </View>
-          )}
-        </View>
-        <View style={styles.memberInfoContainer}>
-          <Text style={styles.memberName}>{captain.name}</Text>
-          <Text style={styles.memberDetail}>Employee ID: {captain.empId}</Text>
-          <Text style={styles.memberDetail}>User ID: {captain.id}</Text>
-        </View>
-      </View>
-    </View>
-  );
-
-  // Render Sponsor Care Buddy Card
-  const renderSponsorCareBuddyCard = (carebuddy: PayingChildInfoResponse['message']['data']['carebuddies'][0], index: number) => (
-    <View key={index} style={styles.infoCard}>
-      <View style={styles.cardHeader}>
-        <View style={styles.memberImageContainer}>
-          {carebuddy.profilePic ? (
-            <Image source={{ uri: carebuddy.profilePic }} style={styles.memberImage} />
-          ) : (
-            <View style={styles.memberImagePlaceholder}>
-              <Text style={styles.memberImageText}>
-                {carebuddy.carebuddyName.charAt(0).toUpperCase()}
-              </Text>
-            </View>
-          )}
-        </View>
-        <View style={styles.memberInfoContainer}>
-          <Text style={styles.memberName}>{carebuddy.carebuddyName}</Text>
-          <Text style={styles.memberDetail}>Type: {carebuddy.carebuddyType}</Text>
-        </View>
-      </View>
-    </View>
-  );
-
-  // Render Sponsor Household Card
-  const renderSponsorHouseholdCard = (household: PayingChildInfoResponse['message']['data']['household'][0], index: number) => (
-    <View key={index} style={styles.infoCard}>
-      <View style={styles.cardHeader}>
-        <View style={styles.memberInfoContainer}>
-          <Text style={styles.memberName}>{household.houseHoldName}</Text>
-          <Text style={styles.memberDetail}>Household ID: {household.household_id}</Text>
-          <Text style={styles.memberDetail}>Mobile: {household.mobileNum}</Text>
-          <Text style={styles.memberDetail}>Location: {household.location}</Text>
-          <Text style={styles.memberDetail}>City: {household.city}</Text>
-          <Text style={styles.memberDetail}>Address: {household.address}</Text>
-          <Text style={styles.memberDetail}>Emergency Contact: {household.emergencyContact}</Text>
-        </View>
-      </View>
-    </View>
-  );
-
-  const getHealthColor = (condition: string) => {
-    switch (condition?.toLowerCase()) {
-      case 'green': return '#28a745';
-      case 'orange': return '#fd7e14';
-      case 'red': return '#dc3545';
-      default: return '#666';
-    }
-  };
-
-  // Member Information Modal
-  const MemberInfoModal = () => (
-    <Modal
-      animationType="slide"
-      transparent={false}
-      visible={memberInfoModalVisible}
-      onRequestClose={() => {
-        setMemberInfoModalVisible(false);
-        setShouldFetchMemberDetails(false);
-      }}
-    >
-      <SafeAreaView style={styles.modalContainer}>
-        <View style={styles.modalHeader}>
-          <TouchableOpacity
-            style={styles.closeButton}
-            onPress={() => {
-              setMemberInfoModalVisible(false);
-              setShouldFetchMemberDetails(false);
-            }}
-          >
-            <Text style={styles.closeButtonText}>Close</Text>
-          </TouchableOpacity>
-          <Text style={styles.modalTitle}>Member Information</Text>
-        </View>
-        <ScrollView style={styles.modalContent}>
-          {detailedMemberLoading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#065084" />
-              <Text style={styles.loadingText}>Loading member information...</Text>
-            </View>
-          ) : detailedMemberError ? (
-            <View style={styles.infoCard}>
-              <Text style={styles.errorText}>Error loading member information</Text>
-              <Text style={styles.memberDetail}>Failed to load data: {detailedMemberError.message}</Text>
-            </View>
-          ) : detailedMemberInfo?.message.data ? (
-            <>
-              {/* Render primary member data */}
-              {renderMemberInfoCard(detailedMemberInfo.message.data, 0)}
-              {/* Render legacy memberArr if present for backward compatibility */}
-              {detailedMemberInfo.message.data.memberArr && detailedMemberInfo.message.data.memberArr.length > 0 && (
-                detailedMemberInfo.message.data.memberArr.map((member, index) => 
-                  renderMemberInfoCard(member, index + 1)
-                )
-              )}
-            </>
-          ) : (
-            <View style={styles.infoCard}>
-              <Text style={styles.memberDetail}>No member information available</Text>
-            </View>
-          )}
-        </ScrollView>
-      </SafeAreaView>
-    </Modal>
-  );
-
-  // Team Information Modal
-  const TeamInfoModal = () => (
-    <Modal
-      animationType="slide"
-      transparent={false}
-      visible={teamInfoModalVisible}
-      onRequestClose={() => {
-        setTeamInfoModalVisible(false);
-        setShouldFetchTeamDetails(false);
-      }}
-    >
-      <SafeAreaView style={styles.modalContainer}>
-        <View style={styles.modalHeader}>
-          <TouchableOpacity
-            style={styles.closeButton}
-            onPress={() => {
-              setTeamInfoModalVisible(false);
-              setShouldFetchTeamDetails(false);
-            }}
-          >
-            <Text style={styles.closeButtonText}>Close</Text>
-          </TouchableOpacity>
-          <Text style={styles.modalTitle}>Team Information</Text>
-        </View>
-        <ScrollView style={styles.modalContent}>
-          {teamMemberLoading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#065084" />
-              <Text style={styles.loadingText}>Loading team information...</Text>
-            </View>
-          ) : teamMemberError ? (
-            <View style={styles.infoCard}>
-              <Text style={styles.errorText}>Error loading team information</Text>
-              <Text style={styles.memberDetail}>Failed to load data: {teamMemberError.message}</Text>
-            </View>
-          ) : (
-            <>
-              {teamMemberInfo?.message.data.captains && teamMemberInfo.message.data.captains.length > 0 && (
-                <View style={styles.sectionContainer}>
-                  <Text style={styles.sectionTitle}>Captains</Text>
-                  {teamMemberInfo.message.data.captains.map((captain, index) => (
-                    <View key={index} style={styles.infoCard}>
-                      <View style={styles.cardHeader}>
-                        <View style={styles.memberImageContainer}>
-                          {captain.profilePic ? (
-                            <Image source={{ uri: captain.profilePic }} style={styles.memberImage} />
-                          ) : (
-                            <View style={styles.memberImagePlaceholder}>
-                              <Text style={styles.memberImageText}>
-                                {captain.name.charAt(0).toUpperCase()}
-                              </Text>
-                            </View>
-                          )}
-                        </View>
-                        <View style={styles.memberInfoContainer}>
-                          <Text style={styles.memberName}>{captain.name}</Text>
-                          <Text style={styles.memberDetail}>Employee ID: {captain.empId}</Text>
-                          <Text style={styles.memberDetail}>User ID: {captain.id}</Text>
-                        </View>
-                      </View>
-                    </View>
-                  ))}
-                </View>
-              )}
-              {teamMemberInfo?.message.data.carebuddies && teamMemberInfo.message.data.carebuddies.length > 0 && (
-                <View style={styles.sectionContainer}>
-                  <Text style={styles.sectionTitle}>Care Buddies</Text>
-                  {teamMemberInfo.message.data.carebuddies.map((carebuddy, index) => 
-                    renderCareBuddyCard(carebuddy, index)
-                  )}
-                </View>
-              )}
-              {(!teamMemberInfo?.message.data.captains || teamMemberInfo.message.data.captains.length === 0) && 
-               (!teamMemberInfo?.message.data.carebuddies || teamMemberInfo.message.data.carebuddies.length === 0) && (
-                <View style={styles.infoCard}>
-                  <Text style={styles.memberDetail}>No team information available</Text>
-                </View>
-              )}
-            </>
-          )}
-        </ScrollView>
-      </SafeAreaView>
-    </Modal>
-  );
-
-  // Relative Information Modal
-  const RelativeInfoModal = () => (
-    <Modal
-      animationType="slide"
-      transparent={false}
-      visible={relativeInfoModalVisible}
-      onRequestClose={() => {
-        setRelativeInfoModalVisible(false);
-        setShouldFetchRelativeDetails(false);
-      }}
-    >
-      <SafeAreaView style={styles.modalContainer}>
-        <View style={styles.modalHeader}>
-          <TouchableOpacity
-            style={styles.closeButton}
-            onPress={() => {
-              setRelativeInfoModalVisible(false);
-              setShouldFetchRelativeDetails(false);
-            }}
-          >
-            <Text style={styles.closeButtonText}>Close</Text>
-          </TouchableOpacity>
-          <Text style={styles.modalTitle}>Relative Information</Text>
-        </View>
-        <ScrollView style={styles.modalContent}>
-          {relativeLoading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#065084" />
-              <Text style={styles.loadingText}>Loading relative information...</Text>
-            </View>
-          ) : relativeError ? (
-            <View style={styles.infoCard}>
-              <Text style={styles.errorText}>Error loading relative information</Text>
-              <Text style={styles.memberDetail}>Failed to load data: {relativeError.message}</Text>
-            </View>
-          ) : relativeInfo ? (
-            <>
-              {/* Relative Details */}
-              <View style={styles.sectionContainer}>
-                <Text style={styles.sectionTitle}>Relative Details</Text>
-                <View style={styles.infoCard}>
-                  <View style={styles.memberInfoContainer}>
-                    <Text style={styles.memberName}>{relativeInfo.message.data.name}</Text>
-                    <Text style={styles.memberDetail}>Relation ID: {relativeInfo.message.data.relation_id}</Text>
-                    <Text style={styles.memberDetail}>Related Member ID: {relativeInfo.message.data.relatedMemberId}</Text>
-                    <Text style={styles.memberDetail}>Phone: {relativeInfo.message.data.phone}</Text>
-                    <Text style={styles.memberDetail}>WhatsApp: {relativeInfo.message.data.whatsapp_num}</Text>
-                    <Text style={styles.memberDetail}>Alternate Number: {relativeInfo.message.data.alternate_num}</Text>
-                    <Text style={styles.memberDetail}>Email: {relativeInfo.message.data.email || 'N/A'}</Text>
-                    <Text style={styles.memberDetail}>Type: {relativeInfo.message.data.type}</Text>
-                    <Text style={styles.memberDetail}>Sponsor: {relativeInfo.message.data.is_sponser ? 'Yes' : 'No'}</Text>
-                  </View>
-                </View>
-              </View>
-
-              {/* Household Information */}
-              {relativeInfo.message.data.household && relativeInfo.message.data.household.length > 0 && (
-                <View style={styles.sectionContainer}>
-                  <Text style={styles.sectionTitle}>Household Information</Text>
-                  {relativeInfo.message.data.household.map((household, index) => 
-                    renderHouseholdCard(household, index)
-                  )}
-                </View>
-              )}
-
-              {/* Members */}
-              {relativeInfo.message.data.members && relativeInfo.message.data.members.length > 0 && (
-                <View style={styles.sectionContainer}>
-                  <Text style={styles.sectionTitle}>Members</Text>
-                  {relativeInfo.message.data.members.map((member, index) => 
-                    renderRelativeMemberCard(member, index)
-                  )}
-                </View>
-              )}
-
-              {/* Captains */}
-              {relativeInfo.message.data.captains && relativeInfo.message.data.captains.length > 0 && (
-                <View style={styles.sectionContainer}>
-                  <Text style={styles.sectionTitle}>Captains</Text>
-                  {relativeInfo.message.data.captains.map((captain, index) => 
-                    renderRelativeCaptainCard(captain, index)
-                  )}
-                </View>
-              )}
-
-              {/* Care Buddies */}
-              {relativeInfo.message.data.carebuddies && relativeInfo.message.data.carebuddies.length > 0 && (
-                <View style={styles.sectionContainer}>
-                  <Text style={styles.sectionTitle}>Care Buddies</Text>
-                  {relativeInfo.message.data.carebuddies.map((carebuddy, index) => 
-                    renderRelativeCareBuddyCard(carebuddy, index)
-                  )}
-                </View>
-              )}
-
-              {/* Plan Details */}
-              {relativeInfo.message.data.planDetails && relativeInfo.message.data.planDetails.length > 0 && (
-                <View style={styles.sectionContainer}>
-                  <Text style={styles.sectionTitle}>Plan Details</Text>
-                  {relativeInfo.message.data.planDetails.map((plan, index) => (
-                    <View key={index} style={styles.infoCard}>
-                      <View style={styles.memberInfoContainer}>
-                        <Text style={styles.memberName}>{plan.planType}</Text>
-                        <Text style={styles.memberDetail}>Valid Till: {plan.validTill}</Text>
-                        <Text style={styles.memberDetail}>Paid Amount: {plan.paidAmount}</Text>
-                        <Text style={styles.memberDetail}>City: {plan.planCity}</Text>
-                        <Text style={styles.memberDetail}>Duration: {plan.planDuration}</Text>
-                        <Text style={styles.memberDetail}>Price: {plan.price}</Text>
-                        <Text style={styles.memberDetail}>Tax: {plan.tax}</Text>
-                      </View>
-                    </View>
-                  ))}
-                </View>
-              )}
-
-              {(!relativeInfo.message.data.members || relativeInfo.message.data.members.length === 0) &&
-               (!relativeInfo.message.data.household || relativeInfo.message.data.household.length === 0) &&
-               (!relativeInfo.message.data.captains || relativeInfo.message.data.captains.length === 0) &&
-               (!relativeInfo.message.data.carebuddies || relativeInfo.message.data.carebuddies.length === 0) &&
-               (!relativeInfo.message.data.planDetails || relativeInfo.message.data.planDetails.length === 0) && (
-                <View style={styles.infoCard}>
-                  <Text style={styles.memberDetail}>No additional relative information available</Text>
-                </View>
-              )}
-            </>
-          ) : (
-            <View style={styles.infoCard}>
-              <Text style={styles.memberDetail}>No relative information available</Text>
-            </View>
-          )}
-        </ScrollView>
-      </SafeAreaView>
-    </Modal>
-  );
-
-  // Sponsor Details Modal
-  const SponsorDetailsModal = () => (
-    <Modal
-      animationType="slide"
-      transparent={false}
-      visible={sponsorDetailsModalVisible}
-      onRequestClose={() => {
-        setSponsorDetailsModalVisible(false);
-        setShouldFetchSponsorDetails(false);
-      }}
-    >
-      <SafeAreaView style={styles.modalContainer}>
-        <View style={styles.modalHeader}>
-          <TouchableOpacity
-            style={styles.closeButton}
-            onPress={() => {
-              setSponsorDetailsModalVisible(false);
-              setShouldFetchSponsorDetails(false);
-            }}
-          >
-            <Text style={styles.closeButtonText}>Close</Text>
-          </TouchableOpacity>
-          <Text style={styles.modalTitle}>Sponsor Details</Text>
-        </View>
-        <ScrollView style={styles.modalContent}>
-          {payingChildLoading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#065084" />
-              <Text style={styles.loadingText}>Loading sponsor information...</Text>
-            </View>
-          ) : payingChildError ? (
-            <View style={styles.infoCard}>
-              <Text style={styles.errorText}>Error loading sponsor information</Text>
-              <Text style={styles.memberDetail}>Failed to load data: {payingChildError.message}</Text>
-            </View>
-          ) : payingChildInfo ? (
-            <>
-              {/* Sponsor Details */}
-              <View style={styles.sectionContainer}>
-                <Text style={styles.sectionTitle}>Sponsor Details</Text>
-                <View style={styles.infoCard}>
-                  <View style={styles.memberInfoContainer}>
-                    <Text style={styles.memberName}>{payingChildInfo.message.data.name}</Text>
-                    <Text style={styles.memberDetail}>Relation ID: {payingChildInfo.message.data.relation_id}</Text>
-                    <Text style={styles.memberDetail}>Household ID: {payingChildInfo.message.data.household_id}</Text>
-                    <Text style={styles.memberDetail}>Phone: {payingChildInfo.message.data.phone}</Text>
-                    <Text style={styles.memberDetail}>WhatsApp: {payingChildInfo.message.data.whatsapp_num || 'N/A'}</Text>
-                    <Text style={styles.memberDetail}>Alternate Number: {payingChildInfo.message.data.alternate_num || 'N/A'}</Text>
-                    <Text style={styles.memberDetail}>Email: {payingChildInfo.message.data.email || 'N/A'}</Text>
-                    <Text style={styles.memberDetail}>Type: {payingChildInfo.message.data.type}</Text>
-                    <Text style={styles.memberDetail}>Sponsor: {payingChildInfo.message.data.is_sponser ? 'Yes' : 'No'}</Text>
-                    <Text style={styles.memberDetail}>Address: {payingChildInfo.message.data.address}</Text>
-                  </View>
-                </View>
-              </View>
-
-              {/* Household Information */}
-              {payingChildInfo.message.data.household && payingChildInfo.message.data.household.length > 0 && (
-                <View style={styles.sectionContainer}>
-                  <Text style={styles.sectionTitle}>Household Information</Text>
-                  {payingChildInfo.message.data.household.map((household, index) => 
-                    renderSponsorHouseholdCard(household, index)
-                  )}
-                </View>
-              )}
-
-              {/* Members */}
-              {payingChildInfo.message.data.members && payingChildInfo.message.data.members.length > 0 && (
-                <View style={styles.sectionContainer}>
-                  <Text style={styles.sectionTitle}>Members</Text>
-                  {payingChildInfo.message.data.members.map((member, index) => 
-                    renderSponsorMemberCard(member, index)
-                  )}
-                </View>
-              )}
-
-              {/* Captains */}
-              {payingChildInfo.message.data.captains && payingChildInfo.message.data.captains.length > 0 && (
-                <View style={styles.sectionContainer}>
-                  <Text style={styles.sectionTitle}>Captains</Text>
-                  {payingChildInfo.message.data.captains.map((captain, index) => 
-                    renderSponsorCaptainCard(captain, index)
-                  )}
-                </View>
-              )}
-
-              {/* Care Buddies */}
-              {payingChildInfo.message.data.carebuddies && payingChildInfo.message.data.carebuddies.length > 0 && (
-                <View style={styles.sectionContainer}>
-                  <Text style={styles.sectionTitle}>Care Buddies</Text>
-                  {payingChildInfo.message.data.carebuddies.map((carebuddy, index) => 
-                    renderSponsorCareBuddyCard(carebuddy, index)
-                  )}
-                </View>
-              )}
-
-              {/* Plan Details */}
-              {payingChildInfo.message.data.planDetails && payingChildInfo.message.data.planDetails.length > 0 && (
-                <View style={styles.sectionContainer}>
-                  <Text style={styles.sectionTitle}>Plan Details</Text>
-                  {payingChildInfo.message.data.planDetails.map((plan, index) => (
-                    <View key={index} style={styles.infoCard}>
-                      <View style={styles.memberInfoContainer}>
-                        <Text style={styles.memberName}>{plan.planType}</Text>
-                        <Text style={styles.memberDetail}>Valid Till: {plan.validTill}</Text>
-                        <Text style={styles.memberDetail}>Paid Amount: {plan.paidAmount}</Text>
-                        <Text style={styles.memberDetail}>City: {plan.planCity}</Text>
-                        <Text style={styles.memberDetail}>Duration: {plan.planDuration}</Text>
-                        <Text style={styles.memberDetail}>Price: {plan.price}</Text>
-                        <Text style={styles.memberDetail}>Tax: {plan.tax}</Text>
-                      </View>
-                    </View>
-                  ))}
-                </View>
-              )}
-
-              {(!payingChildInfo.message.data.members || payingChildInfo.message.data.members.length === 0) &&
-               (!payingChildInfo.message.data.household || payingChildInfo.message.data.household.length === 0) &&
-               (!payingChildInfo.message.data.captains || payingChildInfo.message.data.captains.length === 0) &&
-               (!payingChildInfo.message.data.carebuddies || payingChildInfo.message.data.carebuddies.length === 0) &&
-               (!payingChildInfo.message.data.planDetails || payingChildInfo.message.data.planDetails.length === 0) && (
-                <View style={styles.infoCard}>
-                  <Text style={styles.memberDetail}>No additional sponsor information available</Text>
-                </View>
-              )}
-            </>
-          ) : (
-            <View style={styles.infoCard}>
-              <Text style={styles.memberDetail}>No sponsor information available</Text>
-            </View>
-          )}
-        </ScrollView>
-      </SafeAreaView>
-    </Modal>
-  );
-
-  // Personal Details Modal
-  const PersonalDetailsModal = () => {
-    const currentMember = getCurrentMemberData();
-    
-    return (
-      <Modal
-        animationType="slide"
-        transparent={false}
-        visible={personalDetailsModalVisible}
-        onRequestClose={() => setPersonalDetailsModalVisible(false)}
-      >
-        <SafeAreaView style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={() => setPersonalDetailsModalVisible(false)}
-            >
-              <Text style={styles.closeButtonText}>Close</Text>
-            </TouchableOpacity>
-            <Text style={styles.modalTitle}>Personal Details</Text>
-          </View>
-          <ScrollView style={styles.modalContent}>
-            <View style={styles.infoCard}>
-              <View style={styles.personalDetailRow}>
-                <Text style={styles.personalDetailLabel}>Name:</Text>
-                <Text style={styles.personalDetailValue}>{profileData.name}</Text>
-              </View>
-              <View style={styles.personalDetailRow}>
-                <Text style={styles.personalDetailLabel}>Member ID:</Text>
-                <Text style={styles.personalDetailValue}>{profileData.memberId || 'N/A'}</Text>
-              </View>
-              <View style={styles.personalDetailRow}>
-                <Text style={styles.personalDetailLabel}>Member Type:</Text>
-                <Text style={styles.personalDetailValue}>{profileData.memberType}</Text>
-              </View>
-              {currentMember && (
-                <>
-                  <View style={styles.personalDetailRow}>
-                    <Text style={styles.personalDetailLabel}>Phone:</Text>
-                    <Text style={styles.personalDetailValue}>{currentMember.phone}</Text>
-                  </View>
-                  <View style={styles.personalDetailRow}>
-                    <Text style={styles.personalDetailLabel}>Telephone:</Text>
-                    <Text style={styles.personalDetailValue}>{currentMember.telephone_no}</Text>
-                  </View>
-                  <View style={styles.personalDetailRow}>
-                    <Text style={styles.personalDetailLabel}>Date of Birth:</Text>
-                    <Text style={styles.personalDetailValue}>{currentMember.memberDob}</Text>
-                  </View>
-                  <View style={styles.personalDetailRow}>
-                    <Text style={styles.personalDetailLabel}>Gender:</Text>
-                    <Text style={styles.personalDetailValue}>{currentMember.memberGender}</Text>
-                  </View>
-                  <View style={styles.personalDetailRow}>
-                    <Text style={styles.personalDetailLabel}>Blood Group:</Text>
-                    <Text style={styles.personalDetailValue}>{currentMember.blood_group || 'N/A'}</Text>
-                  </View>
-                  <View style={styles.personalDetailRow}>
-                    <Text style={styles.personalDetailLabel}>Health Condition:</Text>
-                    <Text style={[styles.personalDetailValue, { color: getHealthColor(currentMember.health_condition) }]}>
-                      {currentMember.health_condition}
-                    </Text>
-                  </View>
-                  <View style={styles.personalDetailRow}>
-                    <Text style={styles.personalDetailLabel}>Email:</Text>
-                    <Text style={styles.personalDetailValue}>{currentMember.email || 'N/A'}</Text>
-                  </View>
-                </>
-              )}
-            </View>
-          </ScrollView>
-        </SafeAreaView>
-      </Modal>
-    );
-  };
+  const showRelativesTab = profileData.memberType !== 'Relative';
 
   return (
-    <SafeAreaView style={styles.container}>
-      
-      <ScrollView style={styles.content}>
+    <ImageBackground
+      source={getBackgroundImage()}
+      style={styles.backgroundImage}
+      resizeMode="cover"
+    >
+      <SafeAreaView style={styles.container}>
+        <ScrollView style={styles.content}>
+          <ProfileHeader />
+          <ProfileCard
+            profileData={profileData}
+            isLoading={isLoading}
+            hasError={hasError}
+            onProfilePhotoError={handleProfilePhotoError}
+          />
+          <ProfileMenu
+            showRelativesTab={showRelativesTab}
+            onPersonalDetailsPress={handlePersonalDetailsPress}
+            onMemberInfoPress={handleMemberInfoPress}
+            onSponsorDetailsPress={handleSponsorDetailsPress}
+            onTeamInfoPress={handleTeamInfoPress}
+            onRelativeInfoPress={handleRelativeInfoPress}
+          />
+        </ScrollView>
+        
+        <LogoutButton onLogout={handleLogout} />
 
-      <View style={styles.topSection}>
-          <View style={styles.header}>
-            <View style={styles.figmaCurveBackground} />
+        {/* Modals */}
+        <PersonalDetailsModal
+          visible={personalDetailsModalVisible}
+          onClose={() => setPersonalDetailsModalVisible(false)}
+          profileData={profileData}
+          currentMemberData={getCurrentMemberData()}
+        />
 
-            <TouchableOpacity style={styles.backButton}>
-              <FontAwesome name="arrow-left" size={24} color="white" />
-            </TouchableOpacity>
+        <MemberInfoModal
+          visible={memberInfoModalVisible}
+          onClose={handleCloseMemberInfoModal}
+          loading={detailedMemberLoading}
+          error={detailedMemberError}
+          memberInfo={detailedMemberInfo}
+        />
 
-            <Text style={styles.headerText}>Profile</Text>
-          </View>
+        <TeamInfoModal
+          visible={teamInfoModalVisible}
+          onClose={handleCloseTeamInfoModal}
+          loading={teamMemberLoading}
+          error={teamMemberError}
+          teamMemberInfo={teamMemberInfo}
+        />
 
-          <View style={styles.profileCard}>
-            {isLoading ? (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#007C91" />
-                <Text style={styles.loadingText}>Loading profile...</Text>
-              </View>
-            ) : hasError ? (
-              <Text style={styles.errorText}>Failed to load profile details</Text>
-            ) : (
-              <>
-                <View style={styles.avatarContainer}>
-                  <Text style={styles.avatarText}>{avatarLetter}</Text>
-                </View>
-                <View style={styles.profileInfo}>
-                  <Text style={styles.profileName}>{profileData.name}</Text>
-                  <Text style={styles.profilePhone}>Member ID: {profileData.memberId || 'N/A'}</Text>
-                  <Text style={styles.profileAge}>Member Type: {profileData.memberType}</Text>
-                </View>
-              </>
-            )}
-          </View>
-      </View>
+        <RelativeInfoModal
+          visible={relativeInfoModalVisible}
+          onClose={handleCloseRelativeInfoModal}
+          loading={relativeLoading}
+          error={relativeError}
+          relativeInfo={relativeInfo}
+        />
 
-        <View style={styles.menu}>
-          <TouchableOpacity style={styles.menuItem} onPress={handlePersonalDetailsPress}>
-            <View style={styles.menuIconCircle}>
-              <FontAwesome name="user" size={20} color="#fff" />
-            </View>
-            <Text style={styles.menuText}>Personal Details</Text>
-            <Text style={styles.menuArrow}>›</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.menuItem} onPress={handleSponsorDetailsPress}>
-            <View style={styles.menuIconCircle}>
-              <FontAwesome name="user" size={20} color="#fff" />
-            </View>
-            <Text style={styles.menuText}>Sponsor Details</Text>
-            <Text style={styles.menuArrow}>›</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.menuItem} onPress={handleTeamInfoPress}>
-            <View style={styles.menuIconCircle}>
-              <FontAwesome name="group" size={20} color="#fff" />
-            </View>
-            <Text style={styles.menuText}>Team Information</Text>
-            <Text style={styles.menuArrow}>›</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.menuItem} onPress={handleRelativeInfoPress}>
-            <View style={styles.menuIconCircle}>
-              <FontAwesome name="user-o" size={20} color="#fff" />
-            </View>
-            <Text style={styles.menuText}>Relative Information</Text>
-            <Text style={styles.menuArrow}>›</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.menuItem}>
-            <View style={styles.menuIconCircle}>
-              <FontAwesome name="heartbeat" size={20} color="#fff" />
-            </View>
-            <Text style={styles.menuText}>Health Information</Text>
-            <Text style={styles.menuArrow}>›</Text>
-          </TouchableOpacity>
-        </View>
-
-      </ScrollView>
-      <View style={styles.buttonContainer}>
-        <TouchableOpacity
-          style={styles.logoutButton}
-          onPress={handleLogout}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.logoutButtonText}>Logout</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Modals */}
-      <MemberInfoModal />
-      <TeamInfoModal />
-      <PersonalDetailsModal />
-      <RelativeInfoModal />
-      <SponsorDetailsModal />
-    </SafeAreaView>
+        <SponsorDetailsModal
+          visible={sponsorDetailsModalVisible}
+          onClose={handleCloseSponsorDetailsModal}
+          loading={payingChildLoading}
+          error={payingChildError}
+          payingChildInfo={payingChildInfo}
+        />
+      </SafeAreaView>
+    </ImageBackground>
   );
 };
 
 const styles = StyleSheet.create({
+  backgroundImage: {
+    flex: 1,
+  },
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: 'transparent', // Changed from '#ffffff' to transparent
     paddingTop: 20,
   },
-
-  topSection: {
-    backgroundColor: '#ffffff',
-    position: 'relative',
-    paddingBottom: 20,
-  },
-
-  // 🔷 Curved blue background (left side)
-  figmaCurveBackground: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    width: 200,
-    height: 300,
-    backgroundColor: '#007C91',
-    borderBottomRightRadius: 300,
-    zIndex: -1,
-  },
-
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 10,
-    paddingTop: 50,
-    borderBottomWidth: 0,
-    zIndex: 2,
-  },
-  
-  backButton: {
-    padding: 5,
-    fontSize: 55,
-    color: '#ffffff',
-    fontWeight:'200'
-  },
-  
-  backArrow: {
-    fontSize: 55,
-    color: '#ffffff',
-  },
-  headerText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginLeft: 10,
-    color: '#ffffff',
-    textAlign: 'center',
-  },
-
-  profileCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 15,
-    paddingTop: 25,
-    marginHorizontal: 10,
-    backgroundColor: '#ffffff',
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 3,
-    zIndex: 2,
-    marginTop: -10,
-  },
-
-  avatarContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#065084',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 15,
-  },
-  avatarText: {
-    color: '#ffffff',
-    fontSize: 36,
-    fontWeight: 'bold',
-  },
-  profileInfo: {
-    flex: 1,
-  },
-  profileName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1a1a1a',
-  },
-  profilePhone: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 5,
-  },
-  profileAge: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 5,
-  },
-
   content: {
     flex: 1,
   },
-
-  // 🔻 Menu section styles
-  menu: {
-    flexGrow: 1,
-  },
-  menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-  },
-  menuIconCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#007C91',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  menuText: {
-    flex: 1,
-    fontSize: 18,
-    color: 'black',
-    fontWeight: '700',
-  },
-  menuArrow: {
-    fontSize: 30,
-    color: 'black',
-  },
-
-  // 🔻 Loading and error states
-  loadingContainer: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 15,
-  },
-  loadingText: {
-    fontSize: 14,
-    color: '#666',
-    marginLeft: 10,
-  },
-  errorText: {
-    fontSize: 14,
-    color: '#dc3545',
-    padding: 15,
-  },
-
-  // 🔻 Logout button section
-  buttonContainer: {
-    width: '100%',
-    alignItems: 'center',
-    paddingVertical: 20,
-    paddingHorizontal: 15,
-  },
-  logoutButton: {
-    backgroundColor: '#dc3545',
-    paddingHorizontal: 32,
-    paddingVertical: 12,
-    borderRadius: 25,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    width: '100%',
-    alignItems: 'center',
-  },
-  logoutButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-
-  // 🔻 Modal styles
-  modalContainer: {
-    flex: 1,
-    backgroundColor: '#ffffff',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
-    backgroundColor: '#f8f9fa',
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#1a1a1a',
-    flex: 1,
-    textAlign: 'center',
-  },
-  closeButton: {
-    padding: 8,
-  },
-  closeButtonText: {
-    color: '#065084',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  modalContent: {
-    flex: 1,
-    padding: 15,
-  },
-
-  // 🔻 Info cards & member details
-  infoCard: {
-    backgroundColor: '#f8f9fa',
-    borderRadius: 12,
-    padding: 15,
-    marginBottom: 15,
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  memberImageContainer: {
-    marginRight: 15,
-  },
-  memberImage: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-  },
-  memberImagePlaceholder: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#065084',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  memberImageText: {
-    color: '#ffffff',
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  memberInfoContainer: {
-    flex: 1,
-  },
-  memberName: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#1a1a1a',
-    marginBottom: 8,
-  },
-  memberDetail: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 4,
-  },
-
-  sectionContainer: {
-    marginBottom: 20,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#065084',
-    marginBottom: 10,
-  },
-
-  personalDetailRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e9ecef',
-  },
-  personalDetailLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#495057',
-    flex: 1,
-  },
-  personalDetailValue: {
-    fontSize: 14,
-    color: '#212529',
-    flex: 2,
-    textAlign: 'right',
-  },
 });
-
 
 export default ProfileScreen;

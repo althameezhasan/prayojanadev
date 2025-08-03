@@ -54,6 +54,44 @@ const HomeScreenHeader: React.FC<HomeScreenHeaderWithDataProps> = ({
   
   const memberId = loginDetails?.id || null;
 
+
+
+  // Determine which background image to use based on login type
+  const getBackgroundImage = () => {
+    if (loginDetails?.loginType === 'Member') {
+      return require('../../../assets/image/Member/Hometopbg.png');
+    } else {
+      return require('../../../assets/image/Hometopbg.png');
+    }
+  };
+
+  // Determine which task user icon to use based on login type
+  const getTaskUserIcon = () => {
+    if (loginDetails?.loginType === 'Member') {
+      return require('../../../assets/image/Member/User2.png');
+    } else {
+      return require('../../../assets/image/User2.png');
+    }
+  };
+
+  // Determine which task time icon to use based on login type
+  const getTaskTimeIcon = () => {
+    if (loginDetails?.loginType === 'Member') {
+      return require('../../../assets/image/Member/time.png');
+    } else {
+      return require('../../../assets/image/icons/time.png');
+    }
+  };
+
+  // Determine which task edit icon to use based on login type
+  const getTaskEditIcon = () => {
+    if (loginDetails?.loginType === 'Member') {
+      return require('../../../assets/image/Member/edit.png');
+    } else {
+      return require('../../../assets/image/edit.png');
+    }
+  };
+
   console.log('🏠 HomeScreenHeader - Login Details:', {
     loginType: loginDetails?.loginType,
     id: loginDetails?.id,
@@ -95,24 +133,18 @@ const HomeScreenHeader: React.FC<HomeScreenHeaderWithDataProps> = ({
       
       const data = memberInfo.message.data;
       
-      // Extract household ID from new structure
       const extractedHouseholdId = data.household && data.household.length > 0 
         ? data.household[0].household_id 
-        : data.household_id; // fallback to legacy field
+        : data.household_id;
       
       setHouseholdId(extractedHouseholdId || null);
-
-      // ✅ Set member profile photo from memberPic field
       setProfilePhotoUrl(data.memberPic || null);
       console.log('📸 Member Profile Photo URL:', data.memberPic);
 
-      // Check if this is the new API structure with direct member data
       if (data.memberName && data.memberId === loginDetails.id) {
         console.log('✅ Using new API structure - direct member data');
         setMemberName(data.memberName);
-      } 
-      // Fallback to legacy structure
-      else if (data.memberArr && data.memberArr.length > 0) {
+      } else if (data.memberArr && data.memberArr.length > 0) {
         console.log('🔄 Using legacy API structure - memberArr');
         const currentMember = data.memberArr.find(
           (member) => member.memberId === loginDetails.id,
@@ -121,7 +153,6 @@ const HomeScreenHeader: React.FC<HomeScreenHeaderWithDataProps> = ({
         if (currentMember) {
           console.log('✅ Found matching member in memberArr:', currentMember);
           setMemberName(currentMember.memberName);
-          // ✅ Also set memberPic from legacy structure if needed
           if (!data.memberPic && currentMember.memberPic) {
             setProfilePhotoUrl(currentMember.memberPic);
             console.log('📸 Member Profile Photo URL (from memberArr):', currentMember.memberPic);
@@ -135,10 +166,8 @@ const HomeScreenHeader: React.FC<HomeScreenHeaderWithDataProps> = ({
         setMemberName('Member');
       }
 
-      // Process team members from new structure
       const team: TeamMember[] = [];
 
-      // Add captains (new structure supports multiple captains)
       if (data.captains && data.captains.length > 0) {
         data.captains.forEach((captain) => {
           team.push({
@@ -148,9 +177,7 @@ const HomeScreenHeader: React.FC<HomeScreenHeaderWithDataProps> = ({
             empId: captain.empId,
           });
         });
-      }
-      // Fallback to legacy captain structure
-      else if (data.captain) {
+      } else if (data.captain) {
         team.push({
           name: data.captain.name,
           role: 'Captain',
@@ -159,7 +186,6 @@ const HomeScreenHeader: React.FC<HomeScreenHeaderWithDataProps> = ({
         });
       }
 
-      // Add carebuddies (new structure)
       if (data.carebuddies && data.carebuddies.length > 0) {
         data.carebuddies.forEach((buddy) => {
           team.push({
@@ -169,9 +195,7 @@ const HomeScreenHeader: React.FC<HomeScreenHeaderWithDataProps> = ({
             carebuddyType: buddy.carebuddyType,
           });
         });
-      }
-      // Fallback to legacy carebuddy structure
-      else if (data.carebuddyObj && data.carebuddyObj.length > 0) {
+      } else if (data.carebuddyObj && data.carebuddyObj.length > 0) {
         data.carebuddyObj.forEach((buddy) => {
           team.push({
             name: buddy.carebuddyName,
@@ -190,8 +214,6 @@ const HomeScreenHeader: React.FC<HomeScreenHeaderWithDataProps> = ({
       console.log('📋 Processing Relative API response...');
       
       setHouseholdId(relativeInfo.message.data.household_id);
-      
-      // Set profile photo for relative
       setProfilePhotoUrl(relativeInfo.message.data.profile_photo_url || null);
       console.log('📸 Relative Profile Photo URL:', relativeInfo.message.data.profile_photo_url);
 
@@ -239,8 +261,6 @@ const HomeScreenHeader: React.FC<HomeScreenHeaderWithDataProps> = ({
       console.log('📋 Processing Paying Child API response...');
       
       setHouseholdId(payingChildInfo.message.data.household_id);
-      
-      // Set profile photo for paying child
       setProfilePhotoUrl(payingChildInfo.message.data.profile_photo_url || null);
       console.log('📸 Paying Child Profile Photo URL:', payingChildInfo.message.data.profile_photo_url);
 
@@ -320,10 +340,6 @@ const HomeScreenHeader: React.FC<HomeScreenHeaderWithDataProps> = ({
     });
   }, [memberName, householdId, teamMembers, isLoading, hasError, onDataLoaded]);
 
-  const handleSeeAllPress = () => {
-    console.log('See All tasks pressed');
-  };
-
   const handleEditPress = () => {
     console.log('Edit task pressed');
   };
@@ -333,24 +349,22 @@ const HomeScreenHeader: React.FC<HomeScreenHeaderWithDataProps> = ({
   };
 
   const renderAvatar = () => {
-    // ✅ Show profile photo for ALL user types when available
     if (profilePhotoUrl) {
       return (
         <View style={styles.avatarContainer}>
           <Image
             source={{ uri: profilePhotoUrl }}
             style={styles.profilePhoto}
-            defaultSource={require('../../../assets/image/avatar.png')} // Add a default image
+            defaultSource={require('../../../assets/image/avatar.png')}
             onError={() => {
               console.log('❌ Failed to load profile photo, falling back to letter avatar');
-              setProfilePhotoUrl(null); // Fall back to letter avatar on error
+              setProfilePhotoUrl(null);
             }}
           />
         </View>
       );
     }
 
-    // Default letter avatar when no profile photo is available
     return (
       <View style={styles.avatarContainer}>
         <View style={styles.avatarCircle}>
@@ -365,7 +379,7 @@ const HomeScreenHeader: React.FC<HomeScreenHeaderWithDataProps> = ({
   return (
     <View style={styles.headerContainer}>
       <ImageBackground
-        source={require('../../../assets/image/Hometopbg.png')}
+        source={getBackgroundImage()}
         style={styles.headerBackground}
         imageStyle={styles.headerBackgroundImage}
       >
@@ -409,64 +423,60 @@ const HomeScreenHeader: React.FC<HomeScreenHeaderWithDataProps> = ({
               </TouchableOpacity>
             </View>
 
-           {householdId && tasks && tasks.length > 0 && (
-  <View style={styles.tasksInHeader}>
-    <View style={styles.taskHeader}>
-      <Text style={styles.taskHeaderTitle}>Upcoming task</Text>
-      <TouchableOpacity
-        style={styles.seeAllButton}
-        onPress={handleSeeAllPress}
-        activeOpacity={0.7}
-      >
-        <Text style={styles.seeAllText}>see all</Text>
-      </TouchableOpacity>
-    </View>
-    <View style={styles.headerTaskCard}>
-      <View style={styles.headerTaskTop}>
-        <Text style={styles.headerTaskTitle} numberOfLines={1}>
-          {tasks[0].taskName}
-        </Text>
-        <TouchableOpacity
-          onPress={handleEditPress}
-          activeOpacity={0.7}
-        >
-          <Image
-            source={require('../../../assets/image/edit.png')}
-            style={styles.headerTaskEditIcon}
-          />
-        </TouchableOpacity>
-      </View>
-      <View style={styles.headerTaskBottom}>
-        <View style={styles.headerTaskInfo}>
-          <Image
-            source={require('../../../assets/image/User2.png')}
-            style={styles.headerTaskIconImage}
-          />
-          <Text style={styles.headerTaskText}>{tasks[0].householdName}</Text>
-        </View>
-        <View style={styles.headerTaskDivider} />
-        <View style={styles.headerTaskTimeDate}>
-          <View style={styles.headerTaskInfo}>
-            <Image
-              source={require('../../../assets/image/icons/time.png')}
-              style={styles.headerTaskIconImage}
-            />
-            <View style={styles.textContainer}>
-              <Text style={styles.headerTaskText}>{tasks[0].time}</Text>
-              <Text style={styles.headerTaskText}>
-                {new Date(tasks[0].validTill).toLocaleDateString('en-GB', {
-                  day: '2-digit',
-                  month: 'short',
-                  year: 'numeric',
-                })}
-              </Text>
-            </View>
-          </View>
-        </View>
-      </View>
-    </View>
-  </View>
-)}
+            {householdId && tasks && tasks.length > 0 && (
+              <View style={styles.tasksInHeader}>
+                <View style={styles.taskHeader}>
+                  <Text style={styles.taskHeaderTitle}>Upcoming task</Text>
+                </View>
+                <View style={styles.headerTaskCard}>
+                  <View style={styles.headerTaskTop}>
+                    <Text style={styles.headerTaskTitle} numberOfLines={1}>
+                      {tasks[0].taskName}
+                    </Text>
+                    <TouchableOpacity
+                      onPress={handleEditPress}
+                      activeOpacity={0.7}
+                    >
+                      <Image
+                        source={getTaskEditIcon()}
+                        style={styles.headerTaskEditIcon}
+                      />
+                    </TouchableOpacity>
+                  </View>
+                  <View style={styles.headerTaskBottom}>
+                    <View style={styles.headerTaskInfo}>
+                      <Image
+                        source={getTaskUserIcon()}
+                        style={styles.headerTaskIconImage}
+                      />
+                      <View style={styles.textContainer}>
+                        <Text style={styles.carebuddyTitle}>Carebuddy</Text>
+                        <Text style={styles.headerTaskText}>{tasks[0].householdName}</Text>
+                      </View>
+                    </View>
+                    <View style={styles.headerTaskDivider} />
+                    <View style={styles.headerTaskTimeDate}>
+                      <View style={styles.headerTaskInfo}>
+                        <Image
+                          source={getTaskTimeIcon()}
+                          style={styles.headerTaskIconImage}
+                        />
+                        <View style={styles.textContainer}>
+                          <Text style={styles.headerTaskText}>{tasks[0].time}</Text>
+                          <Text style={styles.headerTaskText}>
+                            {new Date(tasks[0].validTill).toLocaleDateString('en-GB', {
+                              day: '2-digit',
+                              month: 'short',
+                              year: 'numeric',
+                            })}
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+                  </View>
+                </View>
+              </View>
+            )}
           </View>
         </View>
       </ImageBackground>
@@ -599,7 +609,7 @@ const styles = StyleSheet.create({
   },
   taskHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     alignItems: 'center',
     marginBottom: 8,
   },
@@ -607,17 +617,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: '#ffffff',
-  },
-  seeAllButton: {
-    paddingVertical: 4,
-    paddingHorizontal: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 12,
-  },
-  seeAllText: {
-    fontSize: 14,
-    color: '#ffffff',
-    fontWeight: '500',
   },
   headerTaskCard: {
     backgroundColor: '#E6E6E6',
@@ -667,6 +666,12 @@ const styles = StyleSheet.create({
   },
   textContainer: {
     flexDirection: 'column',
+  },
+  carebuddyTitle: {
+    fontSize: 12,
+    color: '#666',
+    fontWeight: '500',
+    marginBottom: 2,
   },
   headerTaskText: {
     fontSize: 14,

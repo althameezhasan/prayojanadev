@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -14,14 +14,13 @@ import HomeScreenHeader, { TeamMember, HeaderData } from '../../components/Homes
 import TeamProfileSection from '../../components/Homescreen/TeamProfileSection';
 import Carousel from '../../components/Homescreen/Carousel';
 
-
 interface HomeScreenProps {
   onNavigateToDashboard: () => void;
 }
 
 const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToDashboard }) => {
   const loginDetails = useLoginDetails();
-  const { updateHouseholdId } = useAuth();
+  const { state, updateHouseholdId } = useAuth();
   const [attendance, setAttendance] = useState<'attending' | 'not_attending' | null>(null);
 
   const [headerData, setHeaderData] = useState<HeaderData>({
@@ -31,6 +30,27 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToDashboard }) => {
     isLoading: false,
     hasError: false,
   });
+
+  // Check if user is a member
+  const isMember = useMemo(() => {
+    return state.user?.loginDetails?.loginType?.toLowerCase() === 'member';
+  }, [state.user?.loginDetails?.loginType]);
+
+  // Define color scheme and assets based on user type
+  const themeConfig = useMemo(() => {
+    return {
+      primaryColor: isMember ? '#289546' : '#007bff',
+      timeIcon: isMember 
+        ? require('../../../assets/image/Member/time.png')
+        : require('../../../assets/image/icons/time.png'),
+      acceptIcon: isMember
+        ? require('../../../assets/image/icons/accept.png')
+        : require('../../../assets/image/icons/accept.png'),
+      wrongIcon: isMember
+        ? require('../../../assets/image/icons/wrong.png')
+        : require('../../../assets/image/icons/wrong.png'),
+    };
+  }, [isMember]);
 
   const handleNotificationPress = () => {
     console.log('Notification icon pressed');
@@ -60,13 +80,13 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToDashboard }) => {
         <View style={styles.content}>
           <View style={styles.eventSection}>
             <View style={styles.eventHeader}>
-              <Text style={styles.eventTitle}>Upcoming event</Text>
-              <TouchableOpacity>
-                <Text style={styles.seeAll}>see all</Text>
-              </TouchableOpacity>
+              <Text style={styles.eventTitle}>Upcoming Interaction</Text>
+              {/* <TouchableOpacity>
+                <Text style={[styles.seeAll, { color: themeConfig.primaryColor }]}>see all</Text>
+              </TouchableOpacity> */}
             </View>
 
-            {/* Static Event Card with Local Assets */}
+            {/* Static Event Card with Dynamic Assets */}
             <View style={styles.eventCardContainer}>
               <View style={styles.eventCardTop}>
                 <View style={styles.eventLeft}>
@@ -76,7 +96,7 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToDashboard }) => {
                 <View style={styles.eventRight}>
                   <View style={styles.iconRow}>
                     <Image
-                      source={require('../../../assets/image/icons/time.png')}
+                      source={themeConfig.timeIcon}
                       style={styles.iconImage}
                     />
                     <View style={styles.textContainer}>
@@ -93,13 +113,16 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToDashboard }) => {
                   onPress={() => setAttendance('attending')}
                 >
                   <Image
-                    source={require('../../../assets/image/icons/accept.png')}
+                    source={themeConfig.acceptIcon}
                     style={styles.statusIconImage}
                   />
                   <Text
                     style={[
                       styles.statusLabel,
-                      attendance === 'attending' && styles.selectedLabel,
+                      attendance === 'attending' && [
+                        styles.selectedLabel, 
+                        { color: themeConfig.primaryColor }
+                      ],
                     ]}
                   >
                     Attending
@@ -111,13 +134,16 @@ const HomeScreen: React.FC<HomeScreenProps> = ({ onNavigateToDashboard }) => {
                   onPress={() => setAttendance('not_attending')}
                 >
                   <Image
-                    source={require('../../../assets/image/icons/wrong.png')}
+                    source={themeConfig.wrongIcon}
                     style={styles.statusIconImage}
                   />
                   <Text
                     style={[
                       styles.statusLabel,
-                      attendance === 'not_attending' && styles.selectedLabel,
+                      attendance === 'not_attending' && [
+                        styles.selectedLabel, 
+                        { color: themeConfig.primaryColor }
+                      ],
                     ]}
                   >
                     Not Attending
@@ -166,7 +192,7 @@ const styles = StyleSheet.create({
   },
   seeAll: {
     fontSize: 14,
-    color: '#007bff',
+    // color will be set dynamically
   },
   eventCardContainer: {
     backgroundColor: '#e0e0e0',
@@ -242,7 +268,7 @@ const styles = StyleSheet.create({
   },
   selectedLabel: {
     fontWeight: 'bold',
-    color: '#007bff',
+    // color will be set dynamically
   },
 });
 

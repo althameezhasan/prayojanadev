@@ -12,9 +12,10 @@ import {
 
 interface SelectScreenProps {
   onGetStarted: () => void;
+    onAuthenticatorLogin: () => void;
 }
 
-const SelectScreen: React.FC<SelectScreenProps> = ({ onGetStarted }) => {
+const SelectScreen: React.FC<SelectScreenProps> = ({ onGetStarted ,  onAuthenticatorLogin}) => {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
@@ -31,6 +32,10 @@ const SelectScreen: React.FC<SelectScreenProps> = ({ onGetStarted }) => {
             <Text style={styles.cardText}>Please select how you'd like to log in:</Text>
             <TouchableOpacity style={styles.getStartedButton} onPress={onGetStarted}>
               <Text style={styles.getStartedButtonText}>Mobile Number</Text>
+            </TouchableOpacity>
+
+             <TouchableOpacity style={styles.authenticatorButton} onPress={onAuthenticatorLogin}>
+              <Text style={styles.authenticatorButtonText}>Authenticator Login</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -51,6 +56,21 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     justifyContent: 'flex-end',
+  },
+    authenticatorButton: {
+    backgroundColor: '#fff',
+    paddingVertical: 20,
+    paddingHorizontal: 40,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: '#007C91',
+    width: '100%',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   bottomCard: {
     backgroundColor: '#fff',
@@ -85,6 +105,11 @@ const styles = StyleSheet.create({
   },
   getStartedButtonText: {
     color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+    authenticatorButtonText: {
+    color: '#007C91',
     fontSize: 16,
     fontWeight: 'bold',
   },

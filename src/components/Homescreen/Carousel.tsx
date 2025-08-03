@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   ImageBackground,
   Dimensions,
 } from 'react-native';
+import { useAuth } from '../../context/AuthContext'; // Adjust path as needed
 
 const { width: screenWidth } = Dimensions.get('window');
 const CAROUSEL_ITEM_WIDTH = screenWidth - 80; // Account for left/right margins
@@ -16,19 +17,22 @@ const CAROUSEL_ITEM_WIDTH = screenWidth - 80; // Account for left/right margins
 const carouselData = [
   {
     id: '1',
-    image: require('../../../assets/image/carousel.png'), // Replace with your image paths
+    image: require('../../../assets/image/carousel.png'), // Default path
+    memberImage: require('../../../assets/image/Member/carousel.png'), // Member path
     title: 'Health Tips',
     subtitle: 'Stay healthy with daily exercises',
   },
   {
     id: '2',
-    image: require('../../../assets/image/carousel.png'), // Replace with your image paths
+    image: require('../../../assets/image/carousel.png'), // Default path
+    memberImage: require('../../../assets/image/Member/carousel.png'), // Member path
     title: 'Medication Reminder',
     subtitle: 'Never miss your medicine schedule',
   },
   {
     id: '3',
-    image: require('../../../assets/image/carousel.png'), // Replace with your image paths
+    image: require('../../../assets/image/carousel.png'), // Default path
+    memberImage: require('../../../assets/image/Member/carousel.png'), // Member path
     title: 'Community Events',
     subtitle: 'Join upcoming community activities',
   },
@@ -44,9 +48,24 @@ interface CarouselProps {
 }
 
 const Carousel: React.FC<CarouselProps> = ({ data = carouselData }) => {
+  const { state } = useAuth(); // Get auth state
   const [currentCarouselIndex, setCurrentCarouselIndex] = useState(data.length); // Start at the first "real" item
   const carouselRef = useRef<FlatList>(null);
-  const loopedData = createLoopedData(data);
+  
+  // Check if user is a member
+  const isMember = useMemo(() => {
+    return state.user?.loginDetails?.loginType?.toLowerCase() === 'member';
+  }, [state.user?.loginDetails?.loginType]);
+
+  // Create data with appropriate image paths based on user type
+  const processedData = useMemo(() => {
+    return data.map(item => ({
+      ...item,
+      currentImage: isMember ? item.memberImage : item.image,
+    }));
+  }, [data, isMember]);
+
+  const loopedData = createLoopedData(processedData);
 
   // Initialize carousel position after mount
   React.useEffect(() => {
@@ -82,13 +101,13 @@ const Carousel: React.FC<CarouselProps> = ({ data = carouselData }) => {
     }
   };
 
-  const renderCarouselItem = ({ item, index }: { item: typeof carouselData[0], index: number }) => (
+  const renderCarouselItem = ({ item, index }: { item: any, index: number }) => (
     <TouchableOpacity style={styles.carouselItem} activeOpacity={0.8}>
-    <ImageBackground
-  source={item.image}
-  style={styles.carouselImage}
-  imageStyle={[styles.carouselImageStyle, { resizeMode: 'contain', }]}
->
+      <ImageBackground
+        source={item.currentImage} // Use the processed image based on user type
+        style={styles.carouselImage}
+        imageStyle={[styles.carouselImageStyle, { resizeMode: 'contain' }]}
+      >
         <View style={styles.carouselOverlay}>
           <Text style={styles.carouselTitle}>{item.title}</Text>
           <Text style={styles.carouselSubtitle}>{item.subtitle}</Text>

@@ -38,19 +38,19 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onTaskPress }) => {
     }
   };
 
-  // Determine status style based on task.status
-  const getStatusStyle = (status: string) => {
-    const statusLower = String(status).toLowerCase(); // Ensure it's a string
+  // Determine status color based on task.status
+  const getStatusColor = (status: string) => {
+    const statusLower = String(status).toLowerCase();
     switch (statusLower) {
       case 'pending':
       case 'planned':
-        return { color: '#f4a261', backgroundColor: '#ffe8d1' };
+        return '#f4a261';
       case 'upcoming':
-        return { color: '#6abf69', backgroundColor: '#e6f3e6' };
+        return '#6abf69';
       case 'completed':
-        return { color: '#4a90e2', backgroundColor: '#e6f0fa' };
+        return '#4a90e2';
       default:
-        return { color: '#f4a261', backgroundColor: '#ffe8d1' }; // Default to pending style
+        return '#f4a261'; // Default to pending color
     }
   };
 
@@ -59,27 +59,42 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onTaskPress }) => {
     return (
       <TouchableOpacity onPress={() => onTaskPress?.(task)} activeOpacity={0.8}>
         <View style={styles.cardContainer}>
-          <View style={styles.header}>
+          <View style={styles.topRow}>
             <Image
               source={{ uri: 'https://via.placeholder.com/50' }}
               style={styles.avatar}
             />
-            <Text style={styles.taskId}>ID: {String(safeTask.task_id)}</Text>
-            <Text style={[styles.status, getStatusStyle(safeTask.status)]}>
-              {String(safeTask.status)}
-            </Text>
+            <View style={styles.rightSection}>
+              <Text style={styles.taskId}>ID : {String(safeTask.task_id)}</Text>
+              <View style={styles.statusContainer}>
+                <View 
+                  style={[
+                    styles.statusDot, 
+                    { backgroundColor: getStatusColor(safeTask.status) }
+                  ]} 
+                />
+                <Text style={styles.statusText}>
+                  {String(safeTask.status)}
+                </Text>
+              </View>
+            </View>
           </View>
+          
           <Text style={styles.taskTitle}>{String(safeTask.task_name)}</Text>
+          
           <Text style={styles.description}>
             {String(safeTask.notes)}
           </Text>
-          <View style={styles.details}>
-            <Text style={styles.detailText}>Care buddy</Text>
-            <Text style={styles.detailText}>{String(safeTask.empName)}</Text>
-          </View>
-          <View style={styles.dateContainer}>
-            <Text style={styles.dateText}>Date</Text>
-            <Text style={styles.dateText}>{formatDate(safeTask.date)}</Text>
+          
+          <View style={styles.bottomRow}>
+            <View style={styles.leftInfo}>
+              <Text style={styles.labelText}>Care buddy</Text>
+              <Text style={styles.valueText}>{String(safeTask.empName)}</Text>
+            </View>
+            <View style={styles.rightInfo}>
+              <Text style={styles.labelText}>Date</Text>
+              <Text style={styles.valueText}>{formatDate(safeTask.date)}</Text>
+            </View>
           </View>
         </View>
       </TouchableOpacity>
@@ -106,55 +121,76 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
-  header: {
+  topRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     marginBottom: 10,
   },
   avatar: {
     width: 50,
     height: 50,
     borderRadius: 25,
-    marginRight: 10,
+  },
+  rightSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    justifyContent: 'space-between',
+    marginLeft: 10,
   },
   taskId: {
     fontSize: 14,
     color: '#666',
-    marginRight: 10,
   },
-  status: {
-    fontSize: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 10,
+  statusContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 6,
+  },
+  statusText: {
+    fontSize: 14,
+    color: '#333',
+    textTransform: 'capitalize',
   },
   taskTitle: {
     fontSize: 18,
     fontWeight: '600',
     color: '#1a1a1a',
-    marginBottom: 5,
+    marginBottom: 8,
   },
   description: {
     fontSize: 14,
     color: '#666',
-    marginBottom: 10,
+    marginBottom: 15,
+    lineHeight: 20,
   },
-  details: {
+  bottomRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 5,
+    alignItems: 'flex-start',
   },
-  dateContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  leftInfo: {
+    flex: 1,
   },
-  detailText: {
+  rightInfo: {
+    flex: 1,
+    alignItems: 'flex-end',
+  },
+  labelText: {
+    fontSize: 12,
+    color: '#999',
+    marginBottom: 2,
+  },
+  valueText: {
     fontSize: 14,
     color: '#1a1a1a',
-  },
-  dateText: {
-    fontSize: 14,
-    color: '#666',
+    fontWeight: '500',
   },
   errorText: {
     fontSize: 16,

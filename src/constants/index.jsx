@@ -1,5 +1,5 @@
-export const API_URL = 'https://wkkhj3mj-443.inc1.devtunnels.ms/prayojana/';
-export const AUTH_URL = 'https://wkkhj3mj-443.inc1.devtunnels.ms/api/auth/';
+export const API_URL = 'https://kwnfmv39-443.inc1.devtunnels.ms/prayojana/';
+export const AUTH_URL = 'https://kwnfmv39-443.inc1.devtunnels.ms/api/auth/';
 
 
 export const Constants = {API_URL, AUTH_URL};
