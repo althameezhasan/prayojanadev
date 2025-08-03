@@ -77,7 +77,7 @@ const MobileInputScreen: React.FC<MobileInputScreenProps> = ({
     if (errorForSignin) {
       console.error('Login failed:', errorForSignin);
     }
-  }, [isSigned, errorForSignin, mobileNumber, onSubmit]);
+  }, [isSigned, errorForSignin, mobileNumber, onSubmit, responseLogin]);
 
   return (
     <SafeAreaView style={styles.container}>
