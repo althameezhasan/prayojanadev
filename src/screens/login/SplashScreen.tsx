@@ -1,3 +1,4 @@
+// src/screens/login/SplashScreen.tsx
 import React, { useEffect } from 'react';
 import { 
   View, 
@@ -49,8 +50,8 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) => {
           },
         ]}
       >
-        <Text style={styles.greeting}>Hi!</Text>
-        <Text style={styles.subtitle}>Welcome to my app</Text>
+        {/* <Text style={styles.greeting}>Hi!</Text> */}
+        <Text style={styles.subtitle}>Prayojana</Text>
       </Animated.View>
     </View>
   );

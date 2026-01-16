@@ -1,3 +1,5 @@
+/* eslint-disable react-native/no-inline-styles */
+// src/screens/login/MobileNumber.tsx
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -13,15 +15,33 @@ import useHTTP from '../../hooks/http';
 
 interface MobileInputScreenProps {
   onSubmit: (number: string, otpData?: any) => void;
+  onBack?: () => void;
+  initialMobileNumber?: string;
 }
 
-const MobileInputScreen: React.FC<MobileInputScreenProps> = ({ onSubmit }) => {
-  const [mobileNumber, setMobileNumber] = useState('');
+const MobileInputScreen: React.FC<MobileInputScreenProps> = ({ 
+  onSubmit, 
+  onBack,
+  initialMobileNumber = ''
+}) => {
+  const [mobileNumber, setMobileNumber] = useState(initialMobileNumber);
   const [isValid, setIsValid] = useState(false);
-      const { loading: loading, data: responseLogin, callAPI: handleSignin, error: errorForSignin, success: isSigned } = useHTTP();
-
+  const { 
+    loading, 
+    data: responseLogin, 
+    callAPI: handleSignin, 
+    error: errorForSignin, 
+    success: isSigned 
+  } = useHTTP();
 
   const validateMobileNumber = (number: string) => /^[0-9]{10}$/.test(number);
+
+  useEffect(() => {
+    // Validate initial mobile number if provided
+    if (initialMobileNumber) {
+      setIsValid(validateMobileNumber(initialMobileNumber));
+    }
+  }, [initialMobileNumber]);
 
   const handleInputChange = (text: string) => {
     const numericText = text.replace(/[^0-9]/g, '');
@@ -30,33 +50,32 @@ const MobileInputScreen: React.FC<MobileInputScreenProps> = ({ onSubmit }) => {
   };
 
   const handleContinue = () => {
-  console.log('isValid:', isValid);
+    console.log('isValid:', isValid);
 
-  if (isValid) {
-    console.log('Sending login request via Axios...');
+    if (isValid) {
+      console.log('Sending login request...');
 
-    handleSignin({
-      url: 'https://kwnfmv39-443.inc1.devtunnels.ms/api/auth/membersignin', // Replace with your IP and port
-      method: 'POST',
-      data: {
-        phone: `+91${mobileNumber}`,
-      },
-    });
-    console.log('response')
-  }
-};
+      handleSignin({
+        url: 'https://sb76775n-443.inc1.devtunnels.ms/api/auth/membersignin',
+        method: 'POST',
+        data: {
+          phone: `+91${mobileNumber}`,
+        },
+      });
+    }
+  };
 
-// Handle response and errors
-useEffect(() => {
+  // Handle response and errors
+ useEffect(() => {
   if (isSigned) {
     console.log('Login successful:', responseLogin);
-    onSubmit(mobileNumber, responseLogin); // Pass to parent
+    onSubmit(mobileNumber, responseLogin);
   }
 
   if (errorForSignin) {
     console.error('Login failed:', errorForSignin);
   }
-}, [isSigned, errorForSignin]);
+}, [isSigned, errorForSignin, responseLogin, mobileNumber, onSubmit]);
 
 
   return (
@@ -66,7 +85,14 @@ useEffect(() => {
         style={styles.topBanner}
         resizeMode="contain"
       >
-        <TouchableOpacity style={styles.backArrow} />
+        <TouchableOpacity 
+          style={styles.backArrow} 
+          onPress={onBack}
+          disabled={loading}
+        >
+          {/* Add your back arrow icon here */}
+          <Text style={styles.backArrowText}>←</Text>
+        </TouchableOpacity>
       </ImageBackground>
 
       <View style={{ width: '100%', alignItems: 'center' }}>
@@ -85,6 +111,7 @@ useEffect(() => {
           We will send a one-time password (OTP) to your number
         </Text>
       </View>
+
       <View style={styles.inputContainer}>
         <View style={styles.phoneInputWrapper}>
           <View style={styles.flagSection}>
@@ -99,19 +126,32 @@ useEffect(() => {
             onChangeText={handleInputChange}
             keyboardType="numeric"
             maxLength={10}
+            editable={!loading}
           />
         </View>
         {mobileNumber.length > 0 && !isValid && (
           <Text style={styles.errorText}>Please enter a valid 10-digit mobile number</Text>
         )}
+        {errorForSignin && (
+          <Text style={styles.errorText}>
+            Failed to send OTP. Please try again.
+          </Text>
+        )}
       </View>
+
       <TouchableOpacity
-        style={[styles.sendButton, !isValid && styles.sendButtonDisabled]}
+        style={[
+          styles.sendButton, 
+          (!isValid || loading) && styles.sendButtonDisabled
+        ]}
         onPress={handleContinue}
-        disabled={!isValid}
+        disabled={!isValid || loading}
       >
-        <Text style={[styles.sendButtonText, !isValid && styles.sendButtonTextDisabled]}>
-          Send OTP
+        <Text style={[
+          styles.sendButtonText, 
+          (!isValid || loading) && styles.sendButtonTextDisabled
+        ]}>
+          {loading ? 'Sending...' : 'Send OTP'}
         </Text>
       </TouchableOpacity>
     </SafeAreaView>
@@ -135,8 +175,15 @@ const styles = StyleSheet.create({
   },
   backArrow: {
     position: 'absolute',
-    top: 20,
+    top: 50,
     left: 20,
+    padding: 10,
+    zIndex: 1,
+  },
+  backArrowText: {
+    fontSize: 24,
+    color: '#000',
+    fontWeight: 'bold',
   },
   loginSection: {
     alignItems: 'flex-start',
@@ -219,7 +266,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   sendButtonDisabled: {
-    backgroundColor: '#007C91',
+    backgroundColor: '#ccc',
   },
   sendButtonText: {
     color: '#fff',
@@ -227,7 +274,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   sendButtonTextDisabled: {
-    color: '#fff',
+    color: '#999',
   },
 });
 
